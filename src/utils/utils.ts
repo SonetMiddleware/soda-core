@@ -1,7 +1,7 @@
 // import { pasteTextToCompositionFacebook } from '@/contentScripts/facebook/utils/handleShare';
 import { isNull, noop } from 'lodash-es'
 import { saveLocal, getLocal, StorageKeys } from './storage'
-
+import { CustomEvents } from './eventDispatch'
 /**
  * index starts at one.
  */
@@ -58,11 +58,6 @@ export const isMobileTwitter =
 export const twitterDomain = isMobileTwitter
   ? 'https://mobile.twitter.com/'
   : 'https://twitter.com/'
-export interface CustomEvents {
-  paste: [text: string | { type: 'image'; value: number[] }]
-  input: [text: string]
-  instagramUpload: [url: string]
-}
 
 export const CustomEventId = 'abcf4ff0ce64-6fea93e2-1ce4-442f-b2f9'
 
@@ -95,4 +90,3 @@ export const removeTextInSharePost = (dom: HTMLElement) => {
     item.innerText = item.innerText.replace(/\$\!.*\!\$/g, '')
   })
 }
-

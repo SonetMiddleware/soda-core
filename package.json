@@ -13,9 +13,7 @@
     "verify:fix": "yarn prettier:fix && yarn lint:fix",
     "clean": "rimraf dist",
     "build": "father-build",
-    "build:watch": "father-build --watch",
-    "webpack": "webpack",
-    "webpack:watch": "webpack --watch"
+    "build:watch": "father-build --watch"
   },
   "author": "EuclidTwin",
   "license": "ISC",
@@ -33,6 +31,12 @@
     "@material-ui/icons": "^4.11.2",
     "@material-ui/lab": "^4.0.0-alpha.58",
     "@nuintun/qrcode": "^3.0.1",
+    "@soda/soda-image-kit": "workspace:^0.0.1",
+    "@soda/soda-ipfs-kit": "workspace:^0.0.1",
+    "@soda/soda-media-sdk": "workspace:^0.0.1",
+    "@soda/soda-mp-sdk": "workspace:^0.0.1",
+    "@soda/soda-nashmarket": "workspace:^0.0.1",
+    "@soda/soda-storage-sdk": "workspace:^0.0.1",
     "@types/lodash-es": "^4.17.4",
     "@types/pubsub-js": "^1.8.2",
     "@umijs/preset-react": "^1.7.8",

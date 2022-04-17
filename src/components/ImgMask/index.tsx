@@ -85,15 +85,13 @@ function ImgMask(props: {
 
   const fetchInfo = async () => {
     console.log('>>>>>>>>>>>>>fetchInfo: ', tokenId)
-    const addr = await getUserAccount()
     const ownerAddress = await getOwner(tokenId)
     const minterAddress = await getMinter(tokenId)
-    console.log('userAccount: ', addr, tokenId)
+
     console.log('ownerAddress: ', ownerAddress, tokenId)
     console.log('minterAddress: ', minterAddress, tokenId)
     setOwner(ownerAddress)
     setMinter(minterAddress)
-    setAccount(addr)
 
     const ownerBindResult =
       (await getTwitterBindResult({
@@ -121,10 +119,11 @@ function ImgMask(props: {
 
   useEffect(() => {
     ;(async () => {
+      const addr = await getUserAccount()
+      setAccount(addr)
+      console.log('userAccount: ', addr)
       if (props.meta && props.meta.length > 1) {
         fetchInfo()
-        const addr = await getUserAccount()
-        setAccount(addr)
         const favNFTs = await getFavNFT({
           addr,
           contract: PlatwinMEME2WithoutRPC
@@ -280,6 +279,7 @@ function ImgMask(props: {
         {props.meta.length === 0 && (
           <Popover content="Mint">
             <FontAwesomeIcon
+              style={{ cursor: 'pointer' }}
               icon={faHamburger}
               onClick={(e) => {
                 e.stopPropagation()
