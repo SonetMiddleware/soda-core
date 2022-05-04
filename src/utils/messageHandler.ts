@@ -24,6 +24,7 @@ export const MessageTypes = {
   Sing_Message: 'Sign_Message',
   Get_Owner: 'Get_Owner',
   Get_Minter: 'Get_Minter',
+  Register_DAO: 'Register_DAO'
 };
 
 export const getOwner = async (tokenId: string) => {
