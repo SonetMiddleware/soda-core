@@ -7,6 +7,8 @@ import type { IOwnedNFTData } from '../../../utils/apis'
 import { getOwnedNFT } from '../../../utils/apis'
 import * as QrCode from '../../../utils/qrcode'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
+import { generateMetaForQrcode, PlatwinContracts } from '@/utils/utils'
+import { getChainId } from '@/utils/messageHandler'
 
 interface IProps {
   account: string
@@ -58,7 +60,10 @@ export default (props: IProps) => {
         setSubmitting(true)
         const selectedImgObj = ownedNFTs[selectedImg]
         const { uri, token_id } = selectedImgObj
-        const meta = `${uri}_${token_id}`
+        // const meta = `${uri}_${token_id}`
+        const chainId = await getChainId()
+        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
+        const meta = generateMetaForQrcode(chainId, contract, token_id)
         console.log('meta: ', meta)
         // create watermask
         const imgUrl = uri.startsWith('http')

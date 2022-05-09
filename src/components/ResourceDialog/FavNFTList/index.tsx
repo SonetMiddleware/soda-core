@@ -8,7 +8,8 @@ import ImgDisplay from '../../ImgDisplay'
 import * as QrCode from '../../../utils/qrcode'
 // import { pasteShareTextToEditor } from '../../../utils/utils'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
-import { getMinter, getOwner } from '../../../utils/messageHandler'
+import { getChainId, getMinter, getOwner } from '../../../utils/messageHandler'
+import { generateMetaForQrcode, PlatwinContracts } from '@/utils/utils'
 
 interface IProps {
   account: string
@@ -69,7 +70,15 @@ export default (props: IProps) => {
         setSubmitting(true)
         const selectedObj = favNFTs[selectedImg]
         const { uri, token_id } = selectedObj
-        const meta = `${uri}_${token_id}`
+        // const meta = `${uri}_${token_id}`
+        const chainId = await getChainId()
+        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
+        const meta = generateMetaForQrcode(
+          chainId,
+          contract,
+          token_id
+        )
+
         console.log('meta: ', meta)
         // create watermask
         const imgUrl = uri.startsWith('http')

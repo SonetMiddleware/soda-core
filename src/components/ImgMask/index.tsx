@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import * as ReactDOM from 'react-dom'
 import './index.less'
 import {
   MessageTypes,
   sendMessage,
   getMinter,
   getOwner,
-  getUserAccount
+  getUserAccount,
+  getChainId
 } from '../../utils/messageHandler'
 import {
   getTwitterBindResult,
@@ -13,9 +15,11 @@ import {
   addToFav,
   getFavNFT,
   PLATFORM,
-  IBindResultData
+  IBindResultData,
+  getCollectionWithId,
+  ICollectionItem
 } from '../../utils/apis'
-import { Popover, message, Button } from 'antd'
+import { Popover, message, Button, Modal } from 'antd'
 import { ipfsAdd } from '../../utils/ipfsHandler'
 import { mixWatermarkImg } from '../../utils/imgHandler'
 import * as QrCode from '../../utils/qrcode'
@@ -34,12 +38,14 @@ import IconOwnerRole from '../../assets/images/icon-owner-role.png'
 import IconOwner from '../../assets/images/icon-owner.png'
 import IconShare from '../../assets/images/icon-share.png'
 import IconSource from '../../assets/images/icon-source.png'
-// import { pasteShareTextToEditor } from '../../utils/utils'
-
+import IconDao from '../../assets/images/icon-dao.svg'
+import IconProposal from '../../assets/images/icon-proposal.svg'
+import ProposalModal from '../ProposalModal'
+import { generateMetaForQrcode, IDocodedMetaData } from '../../utils/utils'
 const PlatwinMEME2WithoutRPC = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
 
 function ImgMask(props: {
-  meta: string[]
+  meta: IDocodedMetaData
   originImgSrc: string
   username: string
 }) {
@@ -56,11 +62,11 @@ function ImgMask(props: {
   const [account, setAccount] = useState('')
   const [owner, setOwner] = useState('')
   const [minter, setMinter] = useState('')
-
-  const [hash, tokenId] = props.meta
+  const [collection, setCollection] = useState<ICollectionItem>()
+  const [proposalModalShow, setProposalModalShow] = useState(false)
+  const { chainId, contract, tokenId, source } = props.meta
   const { username } = props
   console.log('props.meta: ', props.meta)
-  const ipfsOrigin = `https://${hash}.ipfs.dweb.link/`
 
   const isOwner = useMemo(() => {
     if (ownerPlatformAccount.find((item) => item.tid === username)) {
@@ -122,7 +128,7 @@ function ImgMask(props: {
       const addr = await getUserAccount()
       setAccount(addr)
       console.log('userAccount: ', addr)
-      if (props.meta && props.meta.length > 1) {
+      if (tokenId) {
         fetchInfo()
         const favNFTs = await getFavNFT({
           addr,
@@ -131,6 +137,7 @@ function ImgMask(props: {
         if (favNFTs.data.some((item) => item.token_id === Number(tokenId))) {
           setIsInFav(true)
         }
+        fetchCollectionInfo()
       }
     })()
   }, [props.meta])
@@ -199,8 +206,8 @@ function ImgMask(props: {
     )
     setMintLoading(false)
     // 2. create meta
-    // t for twitter
-    const meta = `${hash}_${tokenId}`
+    const chainId = await getChainId()
+    const meta = generateMetaForQrcode(chainId, PlatwinMEME2WithoutRPC, tokenId)
     console.log('meta: ', meta)
     // 4. create watermask
     const qrcode = await QrCode.generateQrCodeBase64(meta)
@@ -219,7 +226,8 @@ function ImgMask(props: {
   }
 
   const handleShare = async () => {
-    await saveLocal(StorageKeys.SHARING_NFT_META, props.meta.join('_'))
+    const metaStr = generateMetaForQrcode(chainId, contract, tokenId)
+    await saveLocal(StorageKeys.SHARING_NFT_META, metaStr)
     const targetUrl = window.location.href.includes('twitter')
       ? 'https://www.facebook.com'
       : 'https://www.twitter.com'
@@ -262,7 +270,7 @@ function ImgMask(props: {
         contract: PlatwinMEME2WithoutRPC,
         token_id: tokenId,
         fav: 1,
-        uri: hash
+        uri: source
       }
       await addToFav(params)
       setIsInFav(true)
@@ -273,10 +281,36 @@ function ImgMask(props: {
     }
   }
 
+  const fetchCollectionInfo = async () => {
+    const collection = await getCollectionWithId(contract) // TODO:get contract from meta
+    setCollection(collection)
+  }
+
+  const toDaoPage = async (e: any) => {
+    e.stopPropagation()
+    const uri = `daoDetail?dao=${collection.id}`
+    const req = {
+      type: MessageTypes.Open_OptionPage,
+      request: {
+        uri
+      }
+    }
+    sendMessage(req)
+  }
+
+  const onCloseProposalModal = () => {
+    setProposalModalShow(false)
+  }
+
+  const toProposal = (e: any) => {
+    e.stopPropagation()
+    setProposalModalShow(true)
+  }
+
   return (
     <div className="img-mask-container">
       <div className="img-mask-icon">
-        {props.meta.length === 0 && (
+        {!tokenId && (
           <Popover content="Mint">
             <FontAwesomeIcon
               style={{ cursor: 'pointer' }}
@@ -289,7 +323,7 @@ function ImgMask(props: {
           </Popover>
         )}
 
-        {props.meta.length > 0 && !showMenuMore && (
+        {tokenId && !showMenuMore && (
           <Popover content="Expand toolbar">
             <div
               className="toolbar-icon"
@@ -304,7 +338,7 @@ function ImgMask(props: {
 
         {showMenuMore && (
           <div className="img-mask-icon-list" style={{ display: 'flex' }}>
-            {props.meta.length > 0 && (
+            {tokenId && (
               <Popover content="Shrink toolbar">
                 <div
                   className="toolbar-icon"
@@ -316,19 +350,19 @@ function ImgMask(props: {
                 </div>
               </Popover>
             )}
-            {props.meta.length > 0 && (
+            {tokenId && (
               <Popover content="View source">
                 <div
                   className="toolbar-icon"
                   onClick={(e) => {
                     e.stopPropagation()
-                    window.open(ipfsOrigin, '_blank')
+                    window.open(source, '_blank')
                   }}>
                   <img src={IconSource} alt="" />
                 </div>
               </Popover>
             )}
-            {props.meta.length > 0 && (
+            {tokenId && (
               <Popover
                 placement="bottom"
                 title={'Share'}
@@ -348,7 +382,7 @@ function ImgMask(props: {
               </Popover>
             }
 
-            {account && props.meta.length > 0 && !isInFav && (
+            {account && tokenId && !isInFav && (
               <Popover content="Add to fav">
                 <div className="toolbar-icon" onClick={handleAddToFav}>
                   <img src={IconFav} alt="" />
@@ -372,6 +406,20 @@ function ImgMask(props: {
                   </div>
                 </Popover>
               )}
+            {collection && (
+              <Popover content="DAO">
+                <div className="toolbar-icon" onClick={toDaoPage}>
+                  <img src={IconDao} alt="" />
+                </div>
+              </Popover>
+            )}
+            {collection && (
+              <Popover content="Proposal">
+                <div className="toolbar-icon" onClick={toProposal}>
+                  <img src={IconProposal} alt="" />
+                </div>
+              </Popover>
+            )}
           </div>
         )}
         {!isBothMinterOwner && isOwner && (
@@ -419,6 +467,11 @@ function ImgMask(props: {
           </Popover>
         )}
       </div>
+      <ProposalModal
+        show={proposalModalShow}
+        onClose={onCloseProposalModal}
+        collection={collection}
+      />
     </div>
   )
 }

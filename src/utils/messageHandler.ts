@@ -1,22 +1,22 @@
 // message to background
 export function randomId() {
-  return Math.random().toString(36).substring(2, 10);
+  return Math.random().toString(36).substring(2, 10)
 }
 
 export const sendMessage = async (message: any) => {
-  const id = randomId();
-  message.id = id;
-  const msg = JSON.stringify(message);
+  const id = randomId()
+  message.id = id
+  const msg = JSON.stringify(message)
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(msg, function (response) {
-      console.log('Response from backend：' + response);
-      const res = JSON.parse(response);
+      console.log('Response from backend：' + response)
+      const res = JSON.parse(response)
       if (res.id === id) {
-        resolve(res);
+        resolve(res)
       }
-    });
-  });
-};
+    })
+  })
+}
 
 export const MessageTypes = {
   Connect_Metamask: 'Connect_Metamask',
@@ -24,63 +24,65 @@ export const MessageTypes = {
   Sing_Message: 'Sign_Message',
   Get_Owner: 'Get_Owner',
   Get_Minter: 'Get_Minter',
-  Register_DAO: 'Register_DAO'
-};
+  Register_DAO: 'Register_DAO',
+  Open_OptionPage: 'Open_OptionPage',
+  InvokeERC721Contract: 'InvokeERC721Contract'
+}
 
 export const getOwner = async (tokenId: string) => {
   const req = {
     type: MessageTypes.Get_Owner,
     request: {
-      tokenId,
-    },
-  };
-  console.log('get owner req: ', req);
-  const resp: any = await sendMessage(req);
-  console.log('get owner: ', resp);
-  const owner = resp.result;
-  return owner;
-};
+      tokenId
+    }
+  }
+  console.log('get owner req: ', req)
+  const resp: any = await sendMessage(req)
+  console.log('get owner: ', resp)
+  const owner = resp.result
+  return owner
+}
 
 export const getMinter = async (tokenId: string) => {
   const req = {
     type: MessageTypes.Get_Minter,
     request: {
-      tokenId,
-    },
-  };
-  const resp: any = await sendMessage(req);
-  console.log('get minter: ', resp);
-  const minter = resp.result;
-  return minter;
-};
+      tokenId
+    }
+  }
+  const resp: any = await sendMessage(req)
+  console.log('get minter: ', resp)
+  const minter = resp.result
+  return minter
+}
 
-let accountGlobal = '';
+let accountGlobal = ''
 export const getUserAccount = async () => {
   if (!accountGlobal) {
     const req = {
-      type: MessageTypes.Connect_Metamask,
-    };
-    const resp: any = await sendMessage(req);
-    console.log('get account: ', resp);
+      type: MessageTypes.Connect_Metamask
+    }
+    const resp: any = await sendMessage(req)
+    console.log('get account: ', resp)
     if (resp.error) {
-      accountGlobal = '';
+      accountGlobal = ''
     } else {
-      const { account } = resp.result;
-      accountGlobal = account;
+      const { account } = resp.result
+      accountGlobal = account
     }
   }
-  return accountGlobal;
-};
+  return accountGlobal
+}
 export const getChainId = async () => {
   try {
     const req = {
-      type: MessageTypes.Connect_Metamask,
-    };
-    const resp: any = await sendMessage(req);
-    console.log('getChainId: ', resp);
-    const { chainId } = resp.result;
-    return chainId;
+      type: MessageTypes.Connect_Metamask
+    }
+    const resp: any = await sendMessage(req)
+    console.log('getChainId: ', resp)
+    const { chainId } = resp.result
+    return chainId
   } catch (err) {
-    console.log(err);
+    console.log(err)
   }
-};
+}

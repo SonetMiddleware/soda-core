@@ -2,6 +2,10 @@
 import { isNull, noop } from 'lodash-es'
 import { saveLocal, getLocal, StorageKeys } from './storage'
 import { CustomEvents } from './eventDispatch'
+import { MessageTypes, sendMessage } from './messageHandler'
+// import * as moment from 'moment'
+const moment = require('moment')
+
 /**
  * index starts at one.
  */
@@ -89,4 +93,102 @@ export const removeTextInSharePost = (dom: HTMLElement) => {
     }
     item.innerText = item.innerText.replace(/\$\!.*\!\$/g, '')
   })
+}
+
+export const PlatwinContracts = {
+  PlatwinMEME2WithoutRPC: {
+    80001: '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5',
+    137: ''
+  }
+}
+
+export const generateMetaForQrcode = (
+  chainID: number,
+  contract: string,
+  tokenId: number | string
+) => {
+  const url = 's.plat.win?'
+  return (
+    url +
+    Buffer.from(String(chainID)).toString('base64') +
+    '_' +
+    Buffer.from(contract.substring(2)).toString('base64') +
+    '_' +
+    Buffer.from(String(tokenId)).toString('base64')
+  )
+}
+
+export type IDocodedMetaData = {
+  chainId: number
+  contract: string
+  tokenId: string
+  source: string
+}
+
+export const decodeMetaData = async (
+  meta: string
+): Promise<IDocodedMetaData> => {
+  const url = 's.plat.win?'
+  const DEFAULT_CHAINID = 80001
+  const DEFAULT_CONTRACT = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
+  if (meta.includes(url)) {
+    const data = meta.split('?')
+    const metadata = data[1].split('_')
+    if (metadata.length === 3) {
+      // get source tokenURI(uint tokenId)
+      const chainId = Buffer.from(metadata[0], 'base64').toString('utf-8')
+      const contract =
+        '0x' + Buffer.from(metadata[1], 'base64').toString('utf-8')
+      const tokenId = Buffer.from(metadata[2], 'base64').toString('utf-8')
+      const req = {
+        type: MessageTypes.InvokeERC721Contract,
+        request: {
+          contract,
+          method: 'tokenURI',
+          readOnly: true,
+          args: [tokenId]
+        }
+      }
+      const res: any = await sendMessage(req)
+      console.log('InvokeERC721Contract: ', res)
+      let source = res.result
+      if (!source.startsWith('http')) {
+        source = `https://${source}.ipfs.dweb.link/`
+      }
+      return {
+        chainId: Number(chainId),
+        contract,
+        tokenId,
+        source
+      }
+    }
+  } else {
+    const resArrs = meta.split('?')
+    const metaData =
+      resArrs.length === 1 ? resArrs[0].split('_') : resArrs[1].split('_')
+    if (metaData.length === 2) {
+      //old version
+
+      return {
+        chainId: Number(DEFAULT_CHAINID),
+        contract: DEFAULT_CONTRACT,
+        tokenId: metaData[1],
+        source: `https://${metaData[0]}.ipfs.dweb.link/`
+      }
+    }
+  }
+  return {
+    chainId: DEFAULT_CHAINID,
+    contract: '',
+    tokenId: '',
+    source: ''
+  }
+}
+
+export const formatDate = (datetime?: number) => {
+  return datetime ? moment(datetime).format('DD/MM/YYYY') : ''
+}
+
+export const formatDateTime = (datetime: number) => {
+  return moment(datetime).format('YYYY-MM-DD HH:mm:ss')
 }

@@ -2,11 +2,16 @@ import React, { useState, useRef } from 'react'
 import './index.less'
 import { Upload, message } from 'antd'
 import CommonButton from '../../Button'
-import { MessageTypes, sendMessage } from '../../../utils/messageHandler'
+import {
+  getChainId,
+  MessageTypes,
+  sendMessage
+} from '../../../utils/messageHandler'
 import { ipfsAdd } from '../../../utils/ipfsHandler'
 import { addToFav } from '../../../utils/apis'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
 import * as QrCode from '../../../utils/qrcode'
+import { generateMetaForQrcode, PlatwinContracts } from '@/utils/utils'
 // import { pasteShareTextToEditor } from '../../../utils/utils';
 
 interface IProps {
@@ -85,11 +90,11 @@ export default (props: IProps) => {
         await addToFav(params)
         // 2. create meta
         // t for twitter
-        const meta = `${hash}_${tokenId}`
+        // const meta = `${hash}_${tokenId}`
+        const chainId = await getChainId()
+        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
+        const meta = generateMetaForQrcode(chainId, contract, tokenId)
         console.log('meta: ', meta)
-        if (meta.split('_').length > 2) {
-          throw new Error('Error meta: ' + meta)
-        }
         // 4. create watermask
         const qrcode = await QrCode.generateQrCodeBase64(meta)
         const [imgDataUrl, imgDataBlob] = await mixWatermarkImg(
