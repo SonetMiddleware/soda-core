@@ -62,8 +62,7 @@ export default (props: IProps) => {
         const { uri, token_id } = selectedImgObj
         // const meta = `${uri}_${token_id}`
         const chainId = await getChainId()
-        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
-        const meta = generateMetaForQrcode(chainId, contract, token_id)
+        const meta = generateMetaForQrcode(chainId, selectedImgObj.contract, Number(token_id))
         console.log('meta: ', meta)
         // create watermask
         const imgUrl = uri.startsWith('http')

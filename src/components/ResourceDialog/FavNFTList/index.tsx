@@ -72,10 +72,9 @@ export default (props: IProps) => {
         const { uri, token_id } = selectedObj
         // const meta = `${uri}_${token_id}`
         const chainId = await getChainId()
-        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
         const meta = generateMetaForQrcode(
           chainId,
-          contract,
+          selectedObj.contract,
           token_id
         )
 

@@ -354,8 +354,8 @@ export interface IGetProposalListParams {
 export enum ProposalStatusEnum {
   SOON,
   OPEN,
-  PASSED,
-  NOT_PASSED
+  VALID,
+  INVALID
 }
 export enum ProposalVoteEnum {
   ADDRESS = 1,
@@ -367,6 +367,7 @@ export interface IProposalItem {
   title: string
   description: string
   start_time: number
+  snapshot_block: number
   end_time: number
   ballot_threshold: number
   status: ProposalStatusEnum // 0：等待投票开始；1: 正在投票，还没结束；2：通过了；3：没通过；
@@ -382,15 +383,18 @@ export interface IGetProposalListResult {
 export const getProposalStatus = (item: IProposalItem) => {
   const now = Date.now()
   const totalVotes = item.results.reduce((a, b) => a + b)
+  if (item.items.length === 1 && totalVotes >= item.ballot_threshold) {
+    return ProposalStatusEnum.VALID
+  }
   if (now < item.start_time) {
     return ProposalStatusEnum.SOON
   } else if (now > item.start_time && now < item.end_time) {
     return ProposalStatusEnum.OPEN
   } else if (now >= item.end_time) {
     if (totalVotes >= item.ballot_threshold) {
-      return ProposalStatusEnum.PASSED
+      return ProposalStatusEnum.VALID
     } else {
-      return ProposalStatusEnum.NOT_PASSED
+      return ProposalStatusEnum.INVALID
     }
   }
 }
@@ -443,7 +447,11 @@ export interface IVoteProposalParams {
 export const voteProposal = async (params: IVoteProposalParams) => {
   const url = `${BACKEND_HOST}/proposal/vote`
   const res = await axios.post(url, params)
-  return true
+  if (res.data.code === SUCCESS_CODE) {
+    return true
+  } else {
+    return false
+  }
 }
 
 export interface IGetUserVoteParams {

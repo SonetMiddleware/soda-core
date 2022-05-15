@@ -101,20 +101,20 @@ export const PlatwinContracts = {
     137: ''
   }
 }
+const URL_Prefix = 'https://s.plat.win?'
 
 export const generateMetaForQrcode = (
-  chainID: number,
+  chainID: Number,
   contract: string,
-  tokenId: number | string
+  tokenId: Number
 ) => {
-  const url = 's.plat.win?'
   return (
-    url +
-    Buffer.from(String(chainID)).toString('base64') +
+    URL_Prefix +
+    encodeNumBase64(Number(chainID)) +
     '_' +
-    Buffer.from(contract.substring(2)).toString('base64') +
+    encodeHexBase64(contract.startsWith('0x') ? contract.substr(2) : contract) +
     '_' +
-    Buffer.from(String(tokenId)).toString('base64')
+    encodeNumBase64(Number(tokenId))
   )
 }
 
@@ -128,18 +128,16 @@ export type IDocodedMetaData = {
 export const decodeMetaData = async (
   meta: string
 ): Promise<IDocodedMetaData> => {
-  const url = 's.plat.win?'
   const DEFAULT_CHAINID = 80001
   const DEFAULT_CONTRACT = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
-  if (meta.includes(url)) {
+  if (meta.includes(URL_Prefix)) {
     const data = meta.split('?')
     const metadata = data[1].split('_')
     if (metadata.length === 3) {
       // get source tokenURI(uint tokenId)
-      const chainId = Buffer.from(metadata[0], 'base64').toString('utf-8')
-      const contract =
-        '0x' + Buffer.from(metadata[1], 'base64').toString('utf-8')
-      const tokenId = Buffer.from(metadata[2], 'base64').toString('utf-8')
+      const chainId = decodeNumBase64(metadata[0])
+      const contract = '0x' + decodeHexBase64(metadata[1])
+      const tokenId = decodeNumBase64(metadata[2]) + ''
       const req = {
         type: MessageTypes.InvokeERC721Contract,
         request: {
@@ -191,4 +189,62 @@ export const formatDate = (datetime?: number) => {
 
 export const formatDateTime = (datetime: number) => {
   return moment(datetime).format('YYYY-MM-DD HH:mm:ss')
+}
+const _base64 =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+export const encodeNumBase64 = (num: Number) => {
+  return encodeHexBase64(num.toString(16))
+}
+export const encodeHexBase64 = (hex: string) => {
+  let idx = hex.length
+  let ret = ''
+  while (idx >= 6) {
+    let sub = parseInt(hex.substring(idx - 6, idx), 16)
+    for (let i = 0; i < 4; ++i) {
+      ret = _base64[sub % 64] + ret
+      sub >>= 6
+    }
+    idx -= 6
+  }
+  if (idx > 0) {
+    let sub = parseInt(hex.substring(0, idx), 16)
+    while (sub > 0) {
+      ret = _base64[sub % 64] + ret
+      sub >>= 6
+    }
+  }
+  console.log(ret)
+  return ret
+}
+
+export const decodeNumBase64 = (b64: string) => {
+  return parseInt(decodeHexBase64(b64), 16)
+}
+export const decodeHexBase64 = (b64: string) => {
+  let idx = b64.length,
+    ret = ''
+  while (idx >= 4) {
+    let sub = 0
+    for (let i = 0; i < 4; ++i) {
+      sub <<= 6
+      sub = sub + _base64.indexOf(b64[idx - 4 + i])
+    }
+    const h = sub.toString(16)
+    ret = '000000'.substring(h.length) + h + ret
+    idx -= 4
+  }
+  if (idx > 0) {
+    let sub = 0
+    for (let i = 0; i < idx; ++i) {
+      sub <<= 6
+      sub = sub + _base64.indexOf(b64[i])
+    }
+    ret = sub.toString(16) + ret
+  }
+  console.log('0000000000000000000000000000000000000000', ret)
+  const res =
+    '0000000000000000000000000000000000000000'.substring(ret.length) + ret
+  console.log(res)
+  return res
 }

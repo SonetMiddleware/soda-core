@@ -26,7 +26,8 @@ export const MessageTypes = {
   Get_Minter: 'Get_Minter',
   Register_DAO: 'Register_DAO',
   Open_OptionPage: 'Open_OptionPage',
-  InvokeERC721Contract: 'InvokeERC721Contract'
+  InvokeERC721Contract: 'InvokeERC721Contract',
+  InvokeWeb3Api: 'InvokeWeb3Api'
 }
 
 export const getOwner = async (tokenId: string) => {

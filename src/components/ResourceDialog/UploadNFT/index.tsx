@@ -79,10 +79,12 @@ export default (props: IProps) => {
           'Your NFT has successfully minted. Now add your thoughts and share with the world!',
           5
         )
+        const chainId = await getChainId()
+        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
         //add to fav
         const params = {
           addr: account,
-          contract: '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5',
+          contract,
           token_id: tokenId,
           fav: 1,
           uri: hash
@@ -91,8 +93,6 @@ export default (props: IProps) => {
         // 2. create meta
         // t for twitter
         // const meta = `${hash}_${tokenId}`
-        const chainId = await getChainId()
-        const contract = PlatwinContracts.PlatwinMEME2WithoutRPC[chainId]
         const meta = generateMetaForQrcode(chainId, contract, tokenId)
         console.log('meta: ', meta)
         // 4. create watermask

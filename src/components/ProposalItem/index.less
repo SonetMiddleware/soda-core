@@ -5,9 +5,10 @@
   border-radius: 8px;
   margin-bottom: 20px;
   padding: 22px 24px;
+  width: 100%;
   display: flex;
-  justify-content: space-between;
   .proposal-left {
+    flex: 1;
     margin-right: 30px;
   }
   .proposal-title {
@@ -31,13 +32,14 @@
     color: #11142d;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 366px;
-    margin-bottom: 36px;
+    height: 40px;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
   .proposal-item-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     > .start-date-time {
       font-family: 'Poppins';
       font-style: normal;

@@ -226,7 +226,7 @@ function ImgMask(props: {
   }
 
   const handleShare = async () => {
-    const metaStr = generateMetaForQrcode(chainId, contract, tokenId)
+    const metaStr = generateMetaForQrcode(chainId, contract, Number(tokenId))
     await saveLocal(StorageKeys.SHARING_NFT_META, metaStr)
     const targetUrl = window.location.href.includes('twitter')
       ? 'https://www.facebook.com'
