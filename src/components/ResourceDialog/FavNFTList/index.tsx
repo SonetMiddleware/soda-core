@@ -10,7 +10,10 @@ import * as QrCode from '../../../utils/qrcode'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
 import { getChainId, getMinter, getOwner } from '../../../utils/messageHandler'
 import { generateMetaForQrcode, PlatwinContracts } from '@/utils/utils'
-
+import getAssetServices from '@soda/soda-asset'
+import { getAppConfig } from '@soda/soda-package-index'
+import { getStorageService } from '@soda/soda-storage-sdk'
+import { getMediaType } from '@soda/soda-media-sdk'
 interface IProps {
   account: string
   publishFunc?: () => void
@@ -77,18 +80,31 @@ export default (props: IProps) => {
           selectedObj.contract,
           token_id
         )
-
+        const assetService = getAppConfig(chainId).assetService as string[]
+        const nft = await getAssetServices(assetService)[
+          assetService[0]
+        ].getNFTFunc({
+          chainId,
+          tokenId: token_id,
+          contract: selectedObj.contract
+        })
+        const storageService = nft.storage || 'ipfs'
+        const mediaType = nft.type || 'image'
+        const imgUrl = await getStorageService(storageService).loadFunc(nft.source, { uri: true })
+        const imgSrc = getMediaType(mediaType).cacheImageFunc(
+          imgUrl
+        )
         console.log('meta: ', meta)
         // create watermask
-        const imgUrl = uri.startsWith('http')
-          ? uri
-          : `https://${uri}.ipfs.dweb.link/`
+        // const imgUrl = uri.startsWith('http')
+        //   ? uri
+        //   : `https://${uri}.ipfs.dweb.link/`
         const qrcode = await QrCode.generateQrCodeBase64(meta)
-        const [imgDataUrl, imgDataBlob] = await mixWatermarkImg(imgUrl, qrcode)
+        const [imgDataUrl, imgDataBlob] = await mixWatermarkImg(imgSrc, qrcode)
         //@ts-ignore
         clipboardData.push(new ClipboardItem({ 'image/png': imgDataBlob }))
         message.success(
-          'Your NFT is minted and copyed. Please paste into the new post dialog',
+          'Your NFT is minted and copied. Please paste into the new post dialog',
           5
         )
         // trigger document focus
@@ -160,7 +176,7 @@ export default (props: IProps) => {
           }}
           value={selectedImg}>
           {favNFTs.map((item, index) => (
-            <Radio value={index} key={item.uri}>
+            <Radio value={index} key={item.uri} className="custom-radio">
               <div className="item-detail">
                 <ImgDisplay
                   className="img-item"

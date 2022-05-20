@@ -41,11 +41,13 @@ import IconSource from '../../assets/images/icon-source.png'
 import IconDao from '../../assets/images/icon-dao.svg'
 import IconProposal from '../../assets/images/icon-proposal.svg'
 import ProposalModal from '../ProposalModal'
-import { generateMetaForQrcode, IDocodedMetaData } from '../../utils/utils'
+import { generateMetaForQrcode } from '../../utils/utils'
+import { getStorageService } from '@soda/soda-storage-sdk'
+import { NFTInfo } from '@soda/soda-asset'
 const PlatwinMEME2WithoutRPC = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
 
 function ImgMask(props: {
-  meta: IDocodedMetaData
+  meta: NFTInfo
   originImgSrc: string
   username: string
 }) {
@@ -142,12 +144,16 @@ function ImgMask(props: {
     })()
   }, [props.meta])
 
-  const getPlatformUserHomepage = (data: IBindResultData) => {
-    if (data.platform === PLATFORM.Facebook) {
-      const url = `https://www.facebook.com/${data.tid}`
-      return url
-    } else if (data.platform === PLATFORM.Twitter) {
-      const url = `https://twitter.com/${data.tid}`
+  const getPlatformUserHomepage = (data: IBindResultData[]) => {
+    for (const item of data) {
+      if (item.platform === PLATFORM.Twitter) {
+        const url = `https://www.facebook.com/${item.tid}`
+        return url
+      }
+    }
+
+    if (data[0] && data[0].platform === PLATFORM.Facebook) {
+      const url = `https://www.facebook.com/${data[0].tid}`
       return url
     }
   }
@@ -155,14 +161,14 @@ function ImgMask(props: {
   const toMinterTwitter = (e) => {
     e.stopPropagation()
     if (minterPlatformAccount[0]) {
-      const url = getPlatformUserHomepage(minterPlatformAccount[0])
+      const url = getPlatformUserHomepage(minterPlatformAccount)
       window.open(url, '_blank')
     }
   }
   const toOwnerTwitter = (e) => {
     e.stopPropagation()
     if (ownerPlatformAccount[0]) {
-      const url = getPlatformUserHomepage(ownerPlatformAccount[0])
+      const url = getPlatformUserHomepage(ownerPlatformAccount)
       window.open(url, '_blank')
     }
   }
@@ -182,7 +188,8 @@ function ImgMask(props: {
     setMintLoading(true)
     // 1. upload to ipfs
     message.info('Uploading your resource to IPFS...', 5)
-    const hash = await ipfsAdd(props.originImgSrc)
+    // const hash = await ipfsAdd(props.originImgSrc)
+    const hash = getStorageService('ipfs').storeFunc(props.originImgSrc)
     console.log('hash: ', hash)
     // 3. mint NFT
     const req = {
@@ -201,7 +208,7 @@ function ImgMask(props: {
       return
     }
     message.success(
-      'Your NFT is minted and copyed. Please paste into the new post dialog',
+      'Your NFT is minted and copied. Please paste into the new post dialog',
       5
     )
     setMintLoading(false)

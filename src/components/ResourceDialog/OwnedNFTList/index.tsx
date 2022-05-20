@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import './index.less'
-import { Spin, Radio, Pagination as AntdPagination, message } from 'antd'
+import { Spin, Pagination as AntdPagination, message, Radio } from 'antd'
 import ImgDisplay from '../../ImgDisplay'
 import CommonButton from '../../Button'
 import type { IOwnedNFTData } from '../../../utils/apis'
@@ -62,7 +62,11 @@ export default (props: IProps) => {
         const { uri, token_id } = selectedImgObj
         // const meta = `${uri}_${token_id}`
         const chainId = await getChainId()
-        const meta = generateMetaForQrcode(chainId, selectedImgObj.contract, Number(token_id))
+        const meta = generateMetaForQrcode(
+          chainId,
+          selectedImgObj.contract,
+          Number(token_id)
+        )
         console.log('meta: ', meta)
         // create watermask
         const imgUrl = uri.startsWith('http')
@@ -73,7 +77,7 @@ export default (props: IProps) => {
         //@ts-ignore
         clipboardData.push(new ClipboardItem({ 'image/png': imgDataBlob }))
         message.success(
-          'Your NFT is minted and copyed. Please paste into the new post dialog',
+          'Your NFT is minted and copied. Please paste into the new post dialog',
           5
         )
         // trigger document focus
@@ -109,7 +113,7 @@ export default (props: IProps) => {
           }}
           value={selectedImg}>
           {ownedNFTs.map((item, index) => (
-            <Radio value={index} key={item.uri}>
+            <Radio value={index} key={item.uri} className="custom-radio">
               <div className="item-detail">
                 <ImgDisplay
                   className="img-item"

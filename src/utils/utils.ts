@@ -2,7 +2,10 @@
 import { isNull, noop } from 'lodash-es'
 import { saveLocal, getLocal, StorageKeys } from './storage'
 import { CustomEvents } from './eventDispatch'
-import { MessageTypes, sendMessage } from './messageHandler'
+import { getChainId, MessageTypes, sendMessage } from './messageHandler'
+import { getAssetServices } from '@soda/soda-asset'
+import { getAppConfig } from '@soda/soda-package-index'
+
 // import * as moment from 'moment'
 const moment = require('moment')
 
@@ -98,7 +101,8 @@ export const removeTextInSharePost = (dom: HTMLElement) => {
 export const PlatwinContracts = {
   PlatwinMEME2WithoutRPC: {
     80001: '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5',
-    137: ''
+    137: '',
+    4: '0x4b2b1f6f2accf4bcdd53fc65e1e4a4ef2b289399'
   }
 }
 const URL_Prefix = 'https://s.plat.win?'
@@ -118,47 +122,69 @@ export const generateMetaForQrcode = (
   )
 }
 
-export type IDocodedMetaData = {
-  chainId: number
-  contract: string
-  tokenId: string
-  source: string
+export const getNFT = async (assetServices: string[], meta: NFTInfo) => {
+  const svs = getAssetServices(assetServices)
+  for (const svc of Object.keys(svs)) {
+    if (svc) {
+      const nft = await svs[svc].getNFTFunc(meta)
+      if (nft) {
+        return nft
+      }
+    }
+  }
 }
 
-export const decodeMetaData = async (
-  meta: string
-): Promise<IDocodedMetaData> => {
+export type NFTInfo = {
+  chainId?: number
+  contract?: string
+  tokenId: string
+  source?: string
+}
+
+export const decodeMetaData = async (meta: string): Promise<NFTInfo> => {
   const DEFAULT_CHAINID = 80001
   const DEFAULT_CONTRACT = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
-  if (meta.includes(URL_Prefix)) {
+  console.log('xxxxxxxxxxxx decodeMetaData')
+  if (meta.includes('s.plat.win?')) {
     const data = meta.split('?')
     const metadata = data[1].split('_')
     if (metadata.length === 3) {
       // get source tokenURI(uint tokenId)
+      debugger
       const chainId = decodeNumBase64(metadata[0])
       const contract = '0x' + decodeHexBase64(metadata[1])
       const tokenId = decodeNumBase64(metadata[2]) + ''
-      const req = {
-        type: MessageTypes.InvokeERC721Contract,
-        request: {
-          contract,
-          method: 'tokenURI',
-          readOnly: true,
-          args: [tokenId]
-        }
-      }
-      const res: any = await sendMessage(req)
-      console.log('InvokeERC721Contract: ', res)
-      let source = res.result
-      if (!source.startsWith('http')) {
-        source = `https://${source}.ipfs.dweb.link/`
-      }
-      return {
-        chainId: Number(chainId),
+      const assetService = getAppConfig(chainId).assetService as string[]
+      const nft = await getAssetServices(assetService)[
+        assetService[0]
+      ].getNFTFunc({
+        chainId,
         contract,
-        tokenId,
-        source
-      }
+        tokenId
+      })
+
+      return nft
+      // const req = {
+      //   type: MessageTypes.InvokeERC721Contract,
+      //   request: {
+      //     contract,
+      //     method: 'tokenURI',
+      //     readOnly: true,
+      //     args: [tokenId]
+      //   }
+      // }
+      // const res: any = await sendMessage(req)
+      // console.log('InvokeERC721Contract: ', res)
+      // let source = res.result
+      // if (!source.startsWith('http')) {
+      //   source = `https://${source}.ipfs.dweb.link/`
+      // }
+      // return {
+      //   chainId: Number(chainId),
+      //   contract,
+      //   tokenId,
+      //   source
+      // }
     }
   } else {
     const resArrs = meta.split('?')
@@ -166,13 +192,26 @@ export const decodeMetaData = async (
       resArrs.length === 1 ? resArrs[0].split('_') : resArrs[1].split('_')
     if (metaData.length === 2) {
       //old version
-
-      return {
-        chainId: Number(DEFAULT_CHAINID),
-        contract: DEFAULT_CONTRACT,
+      const assetService = getAppConfig(DEFAULT_CHAINID)
+        .assetService as string[]
+      const nft = await getAssetServices(assetService)[
+        assetService[0]
+      ].getNFTFunc({
         tokenId: metaData[1],
-        source: `https://${metaData[0]}.ipfs.dweb.link/`
-      }
+        source: metaData[0]
+      })
+      return nft
+      // return getAssetServices().getNFTFunc({
+      //   tokenId: metaData[1],
+      //   source: metaData[0]
+      // })
+
+      // return {
+      //   chainId: Number(DEFAULT_CHAINID),
+      //   contract: DEFAULT_CONTRACT,
+      //   tokenId: metaData[1],
+      //   source: `https://${metaData[0]}.ipfs.dweb.link/`
+      // }
     }
   }
   return {
@@ -242,9 +281,17 @@ export const decodeHexBase64 = (b64: string) => {
     }
     ret = sub.toString(16) + ret
   }
-  console.log('0000000000000000000000000000000000000000', ret)
+  if (ret.length === 42 && ret.startsWith('00')) {
+    //compatible for old version
+    return ret.substring(2)
+  }
   const res =
     '0000000000000000000000000000000000000000'.substring(ret.length) + ret
-  console.log(res)
   return res
+}
+
+export const MAINNET_CHAIN_ID = 137
+export const isMainNet = async () => {
+  const chainId = await getChainId()
+  return chainId && Number(chainId) === MAINNET_CHAIN_ID
 }
