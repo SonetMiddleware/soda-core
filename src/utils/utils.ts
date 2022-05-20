@@ -290,7 +290,7 @@ export const decodeHexBase64 = (b64: string) => {
   return res
 }
 
-export const MAINNET_CHAIN_ID = 137
+export const MAINNET_CHAIN_ID = 1
 export const isMainNet = async () => {
   const chainId = await getChainId()
   return chainId && Number(chainId) === MAINNET_CHAIN_ID

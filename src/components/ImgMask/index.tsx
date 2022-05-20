@@ -41,7 +41,7 @@ import IconSource from '../../assets/images/icon-source.png'
 import IconDao from '../../assets/images/icon-dao.svg'
 import IconProposal from '../../assets/images/icon-proposal.svg'
 import ProposalModal from '../ProposalModal'
-import { generateMetaForQrcode } from '../../utils/utils'
+import { generateMetaForQrcode, isMainNet } from '../../utils/utils'
 import { getStorageService } from '@soda/soda-storage-sdk'
 import { NFTInfo } from '@soda/soda-asset'
 const PlatwinMEME2WithoutRPC = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
@@ -61,6 +61,7 @@ function ImgMask(props: {
   const [ownerPlatformAccount, setOwnerPlatformAccount] = useState<
     IBindResultData[]
   >([])
+  const [isCurrentMainnet, setIsCurrentMainNet] = useState(false)
   const [account, setAccount] = useState('')
   const [owner, setOwner] = useState('')
   const [minter, setMinter] = useState('')
@@ -144,6 +145,13 @@ function ImgMask(props: {
     })()
   }, [props.meta])
 
+  useEffect(() => {
+    ;(async () => {
+      const isMain = await isMainNet()
+      setIsCurrentMainNet(isMain)
+    })()
+  })
+
   const getPlatformUserHomepage = (data: IBindResultData[]) => {
     for (const item of data) {
       if (item.platform === PLATFORM.Twitter) {
@@ -173,6 +181,7 @@ function ImgMask(props: {
     }
   }
   const handleToMarket = (e) => {
+    const mainnetMarket = `https://opensea.io/assets/ethereum/0x248139afb8d3a2e16154fbe4fb528a3a214fd8e7/291`
     e.stopPropagation()
     if (orderId) {
       window.open(`https://nash.market/detail/${orderId}`, '_blank')
@@ -317,7 +326,7 @@ function ImgMask(props: {
   return (
     <div className="img-mask-container">
       <div className="img-mask-icon">
-        {!tokenId && (
+        {!isCurrentMainnet && !tokenId && (
           <Popover content="Mint">
             <FontAwesomeIcon
               style={{ cursor: 'pointer' }}
