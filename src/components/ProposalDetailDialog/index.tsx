@@ -50,7 +50,7 @@ export default (props: IProps) => {
     }
     try {
       setSubmitting(true)
-      const str = web3.utils.sha3(detail.id, vote)
+      const str = web3.utils.soliditySha3(detail.id, vote)
       const msg = {
         type: MessageTypes.Sing_Message,
         request: {

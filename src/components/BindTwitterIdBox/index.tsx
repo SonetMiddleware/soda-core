@@ -42,7 +42,7 @@ export default function BindTwitterIdBox(props: IProps) {
     await navigator.clipboard.writeText(content)
     newPostTrigger()
     Notification.success(
-      'The binding post is generated. Please tweet/post this message to pulish your binding relationship.'
+      `Click into your ${platform===PLATFORM.Twitter ? 'tweet box' : 'status bar'} and paste the binding message from your clipboard. Then post to finish the bind.`
     )
     setShow(false)
     // await pasteShareTextToEditor(content)
