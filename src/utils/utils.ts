@@ -150,7 +150,7 @@ export const decodeMetaData = async (meta: string): Promise<NFTInfo> => {
     const metadata = data[1].split('_')
     if (metadata.length === 3) {
       // get source tokenURI(uint tokenId)
-      debugger
+      // debugger
       const chainId = decodeNumBase64(metadata[0])
       const contract = '0x' + decodeHexBase64(metadata[1])
       const tokenId = decodeNumBase64(metadata[2]) + ''
@@ -290,8 +290,23 @@ export const decodeHexBase64 = (b64: string) => {
   return res
 }
 
-export const MAINNET_CHAIN_ID = 1
+export const MAINNET_CHAIN_ID = [4, 1] // 1
 export const isMainNet = async () => {
   const chainId = await getChainId()
-  return chainId && Number(chainId) === MAINNET_CHAIN_ID
+  return chainId && MAINNET_CHAIN_ID.includes(Number(chainId))
+}
+
+export const delay = async (seconds: number): Promise<null> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(null)
+    }, seconds * 1000)
+  })
+}
+
+export const isSameAddress = (address1: string, address2: string) => {
+  if (address1 && address2) {
+    return address1.toLowerCase() === address2.toLowerCase()
+  }
+  return false
 }

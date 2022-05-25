@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Radio, message, Button, Pagination, Input, Spin } from 'antd'
 import './index.less'
-import type { IFavNFTData } from '../../../utils/apis'
+import { IFavNFTData, retrieveAsset } from '../../../utils/apis'
 import { addToFav, getFavNFT } from '../../../utils/apis'
 import CommonButton from '../../Button'
 import ImgDisplay from '../../ImgDisplay'
@@ -9,7 +9,12 @@ import * as QrCode from '../../../utils/qrcode'
 // import { pasteShareTextToEditor } from '../../../utils/utils'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
 import { getChainId, getMinter, getOwner } from '../../../utils/messageHandler'
-import { generateMetaForQrcode, PlatwinContracts } from '@/utils/utils'
+import {
+  delay,
+  generateMetaForQrcode,
+  PlatwinContracts,
+  isSameAddress
+} from '@/utils/utils'
 import getAssetServices from '@soda/soda-asset'
 import { getAppConfig } from '@soda/soda-package-index'
 import { getStorageService } from '@soda/soda-storage-sdk'
@@ -17,9 +22,10 @@ import { getMediaType } from '@soda/soda-media-sdk'
 interface IProps {
   account: string
   publishFunc?: () => void
+  isCurrentMainnet: boolean
 }
 export default (props: IProps) => {
-  const { account, publishFunc } = props
+  const { account, publishFunc, isCurrentMainnet } = props
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [page, setPage] = useState(1)
@@ -29,36 +35,55 @@ export default (props: IProps) => {
   const [selectedImg, setSelectedImg] = useState<number>()
 
   const fetchFavList = async (currentPage: number) => {
-    if (account) {
-      setLoading(true)
-      const params = {
-        addr: account,
-        page: currentPage,
-        gap: 9
-      }
-      const nfts = await getFavNFT(params)
-      console.log('favNFTs: ', nfts)
-      setTotal(nfts.total)
-      const _nfts = []
-      for (const item of nfts.data) {
-        item.isMinted = false
-        item.isOwned = false
-        const ownerAddress = await getOwner(String(item.token_id))
-        const minterAddress = await getMinter(String(item.token_id))
-        if (ownerAddress === item.addr) {
-          item.isOwned = true
+    try {
+      if (account) {
+        setLoading(true)
+        const params = {
+          addr: account,
+          page: currentPage,
+          gap: 9
         }
-        if (minterAddress === item.addr) {
-          item.isMinted = true
-        }
-        _nfts.push({ ...item })
-      }
+        const nfts = await getFavNFT(params)
+        nfts.data.forEach((item) => {
+          try {
+            if (item.uri && item.uri.includes('{')) {
+              const obj = JSON.parse(item.uri)
+              item.uri = obj.image
+            }
+          } catch (e) {}
+        })
+        console.log('favNFTs: ', nfts)
+        setTotal(nfts.total)
+        const _nfts = []
+        for (const item of nfts.data) {
+          item.isMinted = false
+          item.isOwned = false
+          const ownerAddress = await getOwner(
+            item.contract,
+            String(item.token_id)
+          )
+          if (!isCurrentMainnet) {
+            const minterAddress = await getMinter(String(item.token_id))
+            if (isSameAddress(minterAddress, item.addr)) {
+              item.isMinted = true
+            }
+          }
 
-      console.log('favNFTs: ', _nfts)
+          if (isSameAddress(ownerAddress, item.addr)) {
+            item.isOwned = true
+          }
+
+          _nfts.push({ ...item })
+        }
+
+        console.log('favNFTs: ', _nfts)
+        setLoading(false)
+        setFavNFTs([])
+        setFavNFTs([..._nfts])
+        setPage(currentPage)
+      }
+    } catch (e) {
       setLoading(false)
-      setFavNFTs([])
-      setFavNFTs([..._nfts])
-      setPage(currentPage)
     }
   }
 
@@ -90,10 +115,11 @@ export default (props: IProps) => {
         })
         const storageService = nft.storage || 'ipfs'
         const mediaType = nft.type || 'image'
-        const imgUrl = await getStorageService(storageService).loadFunc(nft.source, { uri: true })
-        const imgSrc = getMediaType(mediaType).cacheImageFunc(
-          imgUrl
+        const imgUrl = await getStorageService(storageService).loadFunc(
+          nft.source,
+          { uri: true }
         )
+        const imgSrc = getMediaType(mediaType).cacheImageFunc(imgUrl)
         console.log('meta: ', meta)
         // create watermask
         // const imgUrl = uri.startsWith('http')
@@ -181,7 +207,7 @@ export default (props: IProps) => {
                 <ImgDisplay
                   className="img-item"
                   src={
-                    item.uri.startsWith('http')
+                    item.uri && item.uri.startsWith('http')
                       ? item.uri
                       : `https://${item.uri}.ipfs.dweb.link/`
                   }

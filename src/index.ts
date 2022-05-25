@@ -17,7 +17,7 @@ import ResourceDialog from './components/ResourceDialog'
 import FavNFTList from './components/ResourceDialog/FavNFTList'
 import OwnedNFTList from './components/ResourceDialog/OwnedNFTList'
 import UploadNFT from './components/ResourceDialog/UploadNFT'
-
+import ListNoData from './components/NoDataList'
 export {
   BindTwitterIdBox,
   Button,
@@ -26,7 +26,8 @@ export {
   ResourceDialog,
   FavNFTList,
   OwnedNFTList,
-  UploadNFT
+  UploadNFT,
+  ListNoData
 }
 export * from './utils/apis'
 export * from './utils/handleShare'

@@ -2,8 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { Modal, Button } from 'antd'
 import * as ReactDOM from 'react-dom'
 import './index.less'
-import { getProposalList, ICollectionItem, IProposalItem } from '@/utils/apis'
-import { formatDate } from '@/utils/utils'
+import {
+  getProposalList,
+  ICollectionItem,
+  IProposalItem,
+  retrieveAssets
+} from '@/utils/apis'
+import { formatDate, isMainNet } from '@/utils/utils'
 import ProposalItem from '../ProposalItem'
 import {
   MessageTypes,
@@ -16,10 +21,11 @@ interface IProps {
   show: boolean
   onClose: () => void
   collection: ICollectionItem
+  contract: string
 }
 
 export default (props: IProps) => {
-  const { show, onClose, collection } = props
+  const { show, onClose, collection,contract } = props
   const { dao: currentDao } = collection || {}
   const [list, setList] = useState<IProposalItem[]>([])
   const [showModal, setShowModal] = useState(false)
@@ -47,7 +53,7 @@ export default (props: IProps) => {
     const msg = {
       type: MessageTypes.InvokeERC721Contract,
       request: {
-        contract: collection.id,
+        contract: contract,
         method: 'balanceOf',
         readOnly: true,
         args: [addr]
@@ -112,10 +118,10 @@ export default (props: IProps) => {
                   {formatDate(currentDao?.start_date)}
                 </span>
               </p>
-              <p className="dao-info-item">
+              {/* <p className="dao-info-item">
                 <span className="label">Total members</span>
                 <span className="value">{currentDao?.total_member}</span>
-              </p>
+              </p> */}
               <p className="dao-info-item">
                 <span className="label">Twitter account</span>
                 <span className="value">{currentDao?.twitter}</span>

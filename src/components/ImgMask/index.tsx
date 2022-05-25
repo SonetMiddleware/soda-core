@@ -16,8 +16,11 @@ import {
   getFavNFT,
   PLATFORM,
   IBindResultData,
-  getCollectionWithId,
-  ICollectionItem
+  ICollectionItem,
+  retrieveAssets,
+  retrieveAsset,
+  IDaoItem,
+  getCollectionWithContract
 } from '../../utils/apis'
 import { Popover, message, Button, Modal } from 'antd'
 import { ipfsAdd } from '../../utils/ipfsHandler'
@@ -45,6 +48,7 @@ import ProposalModal from '../ProposalModal'
 import { IconShareFB, IconShareTwitter } from './icon'
 
 import {
+  delay,
   generateMetaForQrcode,
   isMainNet,
   MAINNET_CHAIN_ID
@@ -73,6 +77,7 @@ function ImgMask(props: {
   const [owner, setOwner] = useState('')
   const [minter, setMinter] = useState('')
   const [collection, setCollection] = useState<ICollectionItem>()
+  const [dao, setDao] = useState<IDaoItem>()
   const [proposalModalShow, setProposalModalShow] = useState(false)
   const { chainId, contract, tokenId, source } = props.meta
   const { username } = props
@@ -99,10 +104,13 @@ function ImgMask(props: {
     return isOwner && isMinter
   }, [isOwner, isMinter])
 
-  const fetchInfo = async () => {
+  const fetchInfo = async (isMain: boolean) => {
     console.log('>>>>>>>>>>>>>fetchInfo: ', tokenId)
-    const ownerAddress = await getOwner(tokenId)
-    const minterAddress = await getMinter(tokenId)
+    const ownerAddress = await getOwner(contract, tokenId)
+    let minterAddress = ''
+    if (!isMain) {
+      minterAddress = await getMinter(tokenId)
+    }
 
     console.log('ownerAddress: ', ownerAddress, tokenId)
     console.log('minterAddress: ', minterAddress, tokenId)
@@ -117,13 +125,15 @@ function ImgMask(props: {
     console.log('ownerBindings: ', bindings)
 
     setOwnerPlatformAccount(bindings)
-    const minterBindResult =
-      (await getTwitterBindResult({
-        addr: minterAddress
-      })) || []
-    const minterBindings = minterBindResult.filter((item) => item.content_id)
-    setMinterPlatformAccount(minterBindings)
-    console.log('minterBindings: ', minterBindings)
+    if (minterAddress) {
+      const minterBindResult =
+        (await getTwitterBindResult({
+          addr: minterAddress
+        })) || []
+      const minterBindings = minterBindResult.filter((item) => item.content_id)
+      setMinterPlatformAccount(minterBindings)
+      console.log('minterBindings: ', minterBindings)
+    }
 
     const order = await getOrderByTokenId(tokenId)
     console.log('order: ', order)
@@ -137,27 +147,26 @@ function ImgMask(props: {
     ;(async () => {
       const addr = await getUserAccount()
       setAccount(addr)
+      const isMain = await isMainNet()
+      setIsCurrentMainNet(isMain)
       console.log('userAccount: ', addr)
       if (tokenId) {
-        fetchInfo()
+        await fetchInfo(isMain)
         const favNFTs = await getFavNFT({
           addr,
-          contract: PlatwinMEME2WithoutRPC
+          contract: contract
         })
-        if (favNFTs.data.some((item) => item.token_id === Number(tokenId))) {
+        if (
+          favNFTs &&
+          favNFTs.data &&
+          favNFTs.data.some((item) => item.token_id === Number(tokenId))
+        ) {
           setIsInFav(true)
         }
         fetchCollectionInfo()
       }
     })()
   }, [props.meta])
-
-  useEffect(() => {
-    ;(async () => {
-      const isMain = await isMainNet()
-      setIsCurrentMainNet(isMain)
-    })()
-  })
 
   const getPlatformUserHomepage = (data: IBindResultData[]) => {
     for (const item of data) {
@@ -191,7 +200,7 @@ function ImgMask(props: {
     e.stopPropagation()
     if (isCurrentMainnet && props.meta.chainId === MAINNET_CHAIN_ID) {
       window.open(
-        `https://opensea.io/assets/ethereum/${props.meta.contract}/${props.meta.tokenId}`
+        `https://testnets.opensea.io/assets/rinkeby/${props.meta.contract}/${props.meta.tokenId}`
       )
     } else if (orderId) {
       window.open(`https://nash.market/detail/${orderId}`, '_blank')
@@ -284,7 +293,7 @@ function ImgMask(props: {
       const addr = await getUserAccount()
       const params = {
         addr,
-        contract: PlatwinMEME2WithoutRPC,
+        contract: contract,
         token_id: tokenId,
         fav: 1,
         uri: source
@@ -299,8 +308,11 @@ function ImgMask(props: {
   }
 
   const fetchCollectionInfo = async () => {
-    const collection = await getCollectionWithId(contract) // TODO:get contract from meta
+    const collection = await getCollectionWithContract(contract) // TODO:get contract from meta
     setCollection(collection)
+    if (collection.dao) {
+      setDao(collection.dao)
+    }
   }
 
   const toDaoPage = async (e: any) => {
@@ -373,7 +385,11 @@ function ImgMask(props: {
                   className="toolbar-icon"
                   onClick={(e) => {
                     e.stopPropagation()
-                    window.open(source, '_blank')
+                    const url =
+                      source && source.startsWith('http')
+                        ? source
+                        : `https://${source}.ipfs.dweb.link/`
+                    window.open(url, '_blank')
                   }}>
                   <img src={IconSource} alt="" />
                 </div>
@@ -425,14 +441,14 @@ function ImgMask(props: {
                   </div>
                 </Popover>
               )}
-            {collection && (
+            {dao && (
               <Popover content="DAO">
                 <div className="toolbar-icon" onClick={toDaoPage}>
                   <img src={IconDao} alt="" />
                 </div>
               </Popover>
             )}
-            {collection && (
+            {dao && (
               <Popover content="Proposal">
                 <div className="toolbar-icon" onClick={toProposal}>
                   <img src={IconProposal} alt="" />
@@ -467,6 +483,7 @@ function ImgMask(props: {
         show={proposalModalShow}
         onClose={onCloseProposalModal}
         collection={collection}
+        contract={contract}
       />
     </div>
   )

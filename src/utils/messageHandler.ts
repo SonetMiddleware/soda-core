@@ -10,9 +10,14 @@ export const sendMessage = async (message: any) => {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(msg, function (response) {
       console.log('Response from backend：' + response)
-      const res = JSON.parse(response)
-      if (res.id === id) {
-        resolve(res)
+      try {
+        const res = JSON.parse(response)
+        if (res.id === id) {
+          resolve(res)
+        }
+      } catch (err) {
+        console.log(response)
+        resolve(response)
       }
     })
   })
@@ -30,10 +35,11 @@ export const MessageTypes = {
   InvokeWeb3Api: 'InvokeWeb3Api'
 }
 
-export const getOwner = async (tokenId: string) => {
+export const getOwner = async (contract: string, tokenId: string) => {
   const req = {
     type: MessageTypes.Get_Owner,
     request: {
+      contract,
       tokenId
     }
   }

@@ -36,13 +36,16 @@ export default function BindTwitterIdBox(props: IProps) {
   const [showConnect, setShowConnect] = useState(false)
 
   const createBindingPost = async (account: string, tid: string) => {
+    debugger
     const content = `${BINDING_CONTENT_TITLE}. My address: ${account}, My id: ${tid}`
     document.body.click()
     //@ts-ignore
     await navigator.clipboard.writeText(content)
     newPostTrigger()
     Notification.success(
-      `Click into your ${platform===PLATFORM.Twitter ? 'tweet box' : 'status bar'} and paste the binding message from your clipboard. Then post to finish the bind.`
+      `Click into your ${
+        platform === PLATFORM.Twitter ? 'tweet box' : 'status bar'
+      } and paste the binding message from your clipboard. Then post to finish the bind.`
     )
     setShow(false)
     // await pasteShareTextToEditor(content)

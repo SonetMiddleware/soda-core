@@ -83,6 +83,7 @@ function ResourceDialog(props: IProps) {
           <div className="tab-content">
             {tab === '1' && (
               <FavNFTList
+                isCurrentMainnet={isCurrentMainnet}
                 account={account}
                 publishFunc={afterFavHandleFinish}
               />
@@ -92,6 +93,7 @@ function ResourceDialog(props: IProps) {
             )}
             {tab === '3' && (
               <OwnedNFTList
+                isCurrentMainnet={isCurrentMainnet}
                 account={account}
                 publishFunc={afterFavHandleFinish}
               />

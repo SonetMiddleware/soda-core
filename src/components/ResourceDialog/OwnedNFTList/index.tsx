@@ -3,7 +3,7 @@ import './index.less'
 import { Spin, Pagination as AntdPagination, message, Radio } from 'antd'
 import ImgDisplay from '../../ImgDisplay'
 import CommonButton from '../../Button'
-import type { IOwnedNFTData } from '../../../utils/apis'
+import { IOwnedNFTData, retrieveAssets } from '../../../utils/apis'
 import { getOwnedNFT } from '../../../utils/apis'
 import * as QrCode from '../../../utils/qrcode'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
@@ -13,10 +13,11 @@ import { getChainId } from '@/utils/messageHandler'
 interface IProps {
   account: string
   publishFunc?: () => void
+  isCurrentMainnet: boolean
 }
 
 export default (props: IProps) => {
-  const { account, publishFunc } = props
+  const { account, publishFunc, isCurrentMainnet } = props
   const [ownedNFTs, setOwnedNFTs] = useState<IOwnedNFTData[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedImg, setSelectedImg] = useState<number>()
@@ -26,24 +27,28 @@ export default (props: IProps) => {
 
   const fetchOwnedList = useCallback(
     async (page: number) => {
-      if (account) {
-        try {
-          setLoading(true)
-          const params = {
-            addr: account,
-            page,
-            gap: 9
+      try {
+        if (account) {
+          try {
+            setLoading(true)
+            const params = {
+              addr: account,
+              page,
+              gap: 9
+            }
+            const nfts = await getOwnedNFT(params)
+            console.log('ownedNFTs: ', nfts)
+            setOwnedNFTs([])
+            setOwnedNFTs(nfts.data)
+            setTotal(nfts.total)
+            setPage(page)
+            setLoading(false)
+          } catch (err) {
+            setLoading(false)
           }
-          const nfts = await getOwnedNFT(params)
-          console.log('ownedNFTs: ', nfts)
-          setOwnedNFTs([])
-          setOwnedNFTs(nfts.data)
-          setTotal(nfts.total)
-          setPage(page)
-          setLoading(false)
-        } catch (err) {
-          setLoading(false)
         }
+      } catch (e) {
+        setLoading(false)
       }
     },
     [account]
@@ -69,9 +74,8 @@ export default (props: IProps) => {
         )
         console.log('meta: ', meta)
         // create watermask
-        const imgUrl = uri.startsWith('http')
-          ? uri
-          : `https://${uri}.ipfs.dweb.link/`
+        const imgUrl =
+          uri && uri.startsWith('http') ? uri : `https://${uri}.ipfs.dweb.link/`
         const qrcode = await QrCode.generateQrCodeBase64(meta)
         const [imgDataUrl, imgDataBlob] = await mixWatermarkImg(imgUrl, qrcode)
         //@ts-ignore
@@ -118,7 +122,7 @@ export default (props: IProps) => {
                 <ImgDisplay
                   className="img-item"
                   src={
-                    item.uri.startsWith('http')
+                    item.uri && item.uri.startsWith('http')
                       ? item.uri
                       : `https://${item.uri}.ipfs.dweb.link/`
                   }
