@@ -310,3 +310,33 @@ export const isSameAddress = (address1: string, address2: string) => {
   }
   return false
 }
+
+const formatIPFSUri = (uri: string) => {
+  let source = uri
+  try {
+    const obj = JSON.parse(uri)
+    if (obj.image) {
+      source = obj.image
+    }
+  } catch (e) {}
+
+  if (uri.startsWith('ipfs://')) {
+    source = uri.substring('ipfs://'.length)
+  }
+  if (!source.startsWith('http')) {
+    source = `https://ipfs.io/ipfs/${source}`
+  }
+  return source
+}
+export const getNFTSource = async (source: string) => {
+  const _source = formatIPFSUri(source)
+  try {
+    const res = await (await (await fetch(_source)).blob()).text()
+    if (res.includes('{')) {
+      const obj = JSON.parse(res)
+      return formatIPFSUri(obj.image)
+    }
+  } catch (e) {
+    return _source
+  }
+}

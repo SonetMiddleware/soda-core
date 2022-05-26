@@ -78,6 +78,7 @@ function ImgMask(props: {
   const [minter, setMinter] = useState('')
   const [collection, setCollection] = useState<ICollectionItem>()
   const [dao, setDao] = useState<IDaoItem>()
+  const [currentChainId, setCurrentChainId] = useState()
   const [proposalModalShow, setProposalModalShow] = useState(false)
   const { chainId, contract, tokenId, source } = props.meta
   const { username } = props
@@ -145,6 +146,8 @@ function ImgMask(props: {
 
   useEffect(() => {
     ;(async () => {
+      const currentChainId = await getChainId()
+      setCurrentChainId(currentChainId)
       const addr = await getUserAccount()
       setAccount(addr)
       const isMain = await isMainNet()
@@ -171,7 +174,7 @@ function ImgMask(props: {
   const getPlatformUserHomepage = (data: IBindResultData[]) => {
     for (const item of data) {
       if (item.platform === PLATFORM.Twitter) {
-        const url = `https://www.facebook.com/${item.tid}`
+        const url = `https://www.twitter.com/${item.tid}`
         return url
       }
     }
@@ -198,9 +201,13 @@ function ImgMask(props: {
   }
   const handleToMarket = (e) => {
     e.stopPropagation()
-    if (isCurrentMainnet && props.meta.chainId === MAINNET_CHAIN_ID) {
+    if (props.meta.chainId === 4) {
       window.open(
         `https://testnets.opensea.io/assets/rinkeby/${props.meta.contract}/${props.meta.tokenId}`
+      )
+    } else if (props.meta.chainId === 1) {
+      window.open(
+        `https://opensea.io/assets/ethereum/${props.meta.contract}/${props.meta.tokenId}`
       )
     } else if (orderId) {
       window.open(`https://nash.market/detail/${orderId}`, '_blank')
@@ -379,7 +386,7 @@ function ImgMask(props: {
                 </div>
               </Popover>
             )}
-            {tokenId && (
+            {tokenId && source && (
               <Popover content="View source">
                 <div
                   className="toolbar-icon"
@@ -417,13 +424,16 @@ function ImgMask(props: {
               </Popover>
             }
 
-            {account && tokenId && !isInFav && (
-              <Popover content="Add to fav">
-                <div className="toolbar-icon" onClick={handleAddToFav}>
-                  <img src={IconFav} alt="" />
-                </div>
-              </Popover>
-            )}
+            {Number(chainId) === Number(currentChainId) &&
+              account &&
+              tokenId &&
+              !isInFav && (
+                <Popover content="Add to fav">
+                  <div className="toolbar-icon" onClick={handleAddToFav}>
+                    <img src={IconFav} alt="" />
+                  </div>
+                </Popover>
+              )}
 
             {!isBothMinterOwner && !isOwner && ownerPlatformAccount.length > 0 && (
               <Popover content="View owner">

@@ -19,7 +19,7 @@ async function getBackHostFirst() {
   }
 }
 
-export const BINDING_CONTENT_TITLE = 'Binding with Soda'
+export const BINDING_CONTENT_TITLE = 'Binding with Soda (https://s.plat.win)'
 
 export const SUCCESS_CODE = 0
 
@@ -315,6 +315,7 @@ export interface IDaoItem {
   twitter: string
   id: string
   img: string
+  isMyDao?: boolean
 }
 export interface IGetCollectionListResult {
   total: number

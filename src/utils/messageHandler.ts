@@ -65,19 +65,19 @@ export const getMinter = async (tokenId: string) => {
 
 let accountGlobal = ''
 export const getUserAccount = async () => {
-  if (!accountGlobal) {
-    const req = {
-      type: MessageTypes.Connect_Metamask
-    }
-    const resp: any = await sendMessage(req)
-    console.log('get account: ', resp)
-    if (resp.error) {
-      accountGlobal = ''
-    } else {
-      const { account } = resp.result
-      accountGlobal = account
-    }
+  // if (!accountGlobal) {
+  const req = {
+    type: MessageTypes.Connect_Metamask
   }
+  const resp: any = await sendMessage(req)
+  console.log('get account: ', resp)
+  if (resp.error) {
+    accountGlobal = ''
+  } else {
+    const { account } = resp.result
+    accountGlobal = account
+  }
+  // }
   return accountGlobal
 }
 export const getChainId = async () => {

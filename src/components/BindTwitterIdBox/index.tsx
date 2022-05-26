@@ -36,7 +36,6 @@ export default function BindTwitterIdBox(props: IProps) {
   const [showConnect, setShowConnect] = useState(false)
 
   const createBindingPost = async (account: string, tid: string) => {
-    debugger
     const content = `${BINDING_CONTENT_TITLE}. My address: ${account}, My id: ${tid}`
     document.body.click()
     //@ts-ignore
