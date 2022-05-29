@@ -77,6 +77,7 @@ export default function BindTwitterIdBox(props: IProps) {
         setShow(false)
       } else {
         setShow(true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
     })()
