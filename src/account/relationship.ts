@@ -1,6 +1,6 @@
 import * as Api from './service/apis'
 
-export const BINDING_CONTENT_TITLE = 'Binding with Soda'
+export const BINDING_CONTENT_TITLE = 'Binding with Soda (https://s.plat.win)'
 
 export const bind = async () => {}
 

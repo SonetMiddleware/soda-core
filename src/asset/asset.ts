@@ -1,4 +1,5 @@
 import {
+  getAssetServiceCapability,
   getAssetServices as assetGetServices,
   invoke,
   Function,
@@ -10,15 +11,32 @@ import { getCacheImage, render } from '@soda/soda-media-sdk'
 import { mixWatermarkImg } from './utils/imgHandler'
 import { decodeQrcodeFromImgSrc, generateQrCodeBase64 } from './utils/qrcode'
 import { decodeMaskToCache, generateTokenMask } from './utils/mask'
-import { getChainId } from '../account'
+import { getChainId as utilGetChainId } from '../account'
 import { getAppConfig } from '@soda/soda-package-index'
+
+const getChainId = async (chainId?: number): Promise<number> => {
+  return chainId ? chainId : await utilGetChainId()
+}
+export const getCapableServiceNames = async (
+  action: string,
+  chainId?: number
+) => {
+  const cid = await getChainId(chainId)
+  const svc = getAppConfig(cid).assetService as string[]
+  const assetServices = []
+  for (const s of svc) {
+    const capable = getAssetServiceCapability(s, { chainId: cid, action })
+    if (capable) assetServices.push(s)
+  }
+  return { chainId: cid, assetServices }
+}
 
 export const getAssetServices = async (meta: {
   services?: string[]
   chainId?: number
 }): Promise<{ chainId: number; names: string[] }> => {
   const { services, chainId } = meta
-  const cid = chainId ? chainId : await getChainId()
+  const cid = await getChainId(chainId)
   const svc = getAppConfig(cid).assetService as string[]
   let names = []
   if (services) {
@@ -57,15 +75,18 @@ export const mint = async (meta: {
       storeCallback,
       mintCallback
     } = meta
+    const cid = await getChainId(chainId)
     const { names } = await getAssetServices({
       services: service ? [service] : null,
-      chainId
+      chainId: cid
     })
+    if (names.length <= 0) throw new Error('No mint service found.')
     if (preCallback) preCallback()
     const hash = await store(storage, content)
     if (storeCallback) storeCallback(hash)
     // TODO: choose better mint service for now, first service only
     const token = await invoke(names[0], Function.mint, {
+      chainId: cid,
       source: hash
     })
     if (mintCallback) mintCallback(token)

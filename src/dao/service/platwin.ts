@@ -2,11 +2,13 @@ import { createWeb3, getUserAccount } from '@soda/soda-util'
 import Contracts from './config/contracts'
 import RegisterDaoAbi from './config/abis/DAORegistry.json'
 import { AbiItem } from 'web3-utils'
+import { serviceRequestAccounts } from '@soda/soda-util'
 
 export const registerDao = async (params: any) => {
   const { collectionId, name, facebook, twitter } = params
   const web3 = createWeb3()
-  const account = await getUserAccount()
+  const { accounts } = await serviceRequestAccounts()
+  const account = accounts[0]
   const CHAIN_ID = await web3.eth.getChainId()
   const daoContract = new web3.eth.Contract(
     RegisterDaoAbi.abi as AbiItem[],
