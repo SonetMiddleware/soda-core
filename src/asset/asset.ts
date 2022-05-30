@@ -22,29 +22,36 @@ export const getCapableServiceNames = async (
   chainId?: number
 ) => {
   const cid = await getChainId(chainId)
-  const svc = getAppConfig(cid).assetService as string[]
   const assetServices = []
-  for (const s of svc) {
-    const capable = getAssetServiceCapability(s, { chainId: cid, action })
-    if (capable) assetServices.push(s)
+  try {
+    const svc = getAppConfig(cid).assetService
+    for (const s of svc) {
+      const capable = getAssetServiceCapability(s, { chainId: cid, action })
+      if (capable) assetServices.push(s)
+    }
+  } catch (e) {
+    console.error('[core-asset] getCapableServiceNames: ', e)
   }
   return { chainId: cid, assetServices }
 }
-
 export const getAssetServices = async (meta: {
   services?: string[]
   chainId?: number
 }): Promise<{ chainId: number; names: string[] }> => {
   const { services, chainId } = meta
   const cid = await getChainId(chainId)
-  const svc = getAppConfig(cid).assetService as string[]
   let names = []
-  if (services) {
-    for (const s of services) {
-      if (svc.includes(s)) names.push(s)
+  try {
+    const svc = getAppConfig(cid).assetService
+    if (services) {
+      for (const s of services) {
+        if (svc.includes(s)) names.push(s)
+      }
     }
+    if (names.length == 0) names = svc
+  } catch (e) {
+    console.error('[core-asset] getAssetServices: ', e)
   }
-  if (names.length == 0) names = svc
   return { chainId: cid, names }
 }
 
