@@ -324,7 +324,11 @@ const formatIPFSUri = (uri: string) => {
     source = uri.substring('ipfs://'.length)
   }
   if (!source.startsWith('http')) {
-    source = `https://ipfs.io/ipfs/${source}`
+    if (source.indexOf('/') > 0) {
+      source = `https://ipfs.io/ipfs/${source}`
+    } else {
+      source = `https://${source}.ipfs.dweb.link/`
+    }
   }
   return source
 }

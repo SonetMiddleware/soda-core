@@ -54,7 +54,11 @@ export const bindPost = async (params: IBindPostParams) => {
   const url = `${Host_Map[80001]}/bind-addr/record`
   const res = await axios.post(url, params)
   console.log('bindPost: ', res)
-  return true
+  if (res.data.code === SUCCESS_CODE) {
+    return true
+  } else {
+    return false
+  }
 }
 
 export interface IUnbindAddrParams {
