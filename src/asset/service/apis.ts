@@ -1,7 +1,24 @@
-import { IDaoItem } from '@/dao/service/apis'
-import { httpRequest, HttpRequestType } from '@soda/soda-util'
+import { NFT } from '@soda/soda-asset'
+import { getChainId, httpRequest, HttpRequestType } from '@soda/soda-util'
 
-const BACKEND_HOST = process.env.API_HOST
+// hard code for now
+const HOST_MAP: Record<number, string> = {
+  80001: 'https://testapi2.platwin.io:49336/api/v1',
+  4: 'https://testapi3.platwin.io:59336/api/v1',
+  1: 'https://api.platwin.io:8081/api/v1'
+}
+const getHost = async (meta?: NFT | number): Promise<string> => {
+  let chainId = 0
+  if (meta) {
+    if (typeof meta == 'number') chainId = meta
+    else chainId = (meta as NFT).chainId
+  } else chainId = await getChainId()
+  if (!HOST_MAP[chainId])
+    throw new Error(
+      '[asset-platwin] getHost error, unsupported chainId: ' + chainId
+    )
+  return HOST_MAP[chainId]
+}
 
 export interface IGetOwnedNFTParams {
   addr: string
@@ -34,7 +51,7 @@ export const getOwnedNFT = async (
       data: []
     }
   }
-  const url = `${BACKEND_HOST}/nfts`
+  const url = `${await getHost()}/nfts`
   const res = await httpRequest({ url, params })
   console.debug('[core-asset] getOwnedNFT: ', params, res)
   // FIXME: handle error
@@ -69,7 +86,7 @@ export const getFavNFT = async (
       data: []
     }
   }
-  const url = `${BACKEND_HOST}/favorite`
+  const url = `${await getHost()}/favorite`
   const res = await httpRequest({ url, params })
   console.debug('[core-asset] getFavNFT: ', params, res)
   // FIXME: handle error
@@ -85,7 +102,7 @@ export interface IAddToFavParams {
   fav: number // 0 or 1
 }
 export const addToFav = async (params: IAddToFavParams) => {
-  const url = `${BACKEND_HOST}/favorite-nft`
+  const url = `${await getHost()}/favorite-nft`
   try {
     const res = await httpRequest({ url, params, type: HttpRequestType.POST })
     console.debug('[core-asset] addToFav: ', params, res)
@@ -95,32 +112,6 @@ export const addToFav = async (params: IAddToFavParams) => {
     console.error(err)
     return false
   }
-}
-
-export interface IGetCollectionListParams {
-  addr: string
-  page?: number
-  gap?: number
-}
-export interface ICollectionItem {
-  id: string
-  name: string
-  img: string
-  dao: IDaoItem
-}
-export interface IGetCollectionListResult {
-  total: number
-  data: ICollectionItem[]
-}
-export const getCollectionList = async (
-  params: IGetCollectionListParams
-): Promise<IGetCollectionListResult> => {
-  const url = `${BACKEND_HOST}/collection-list`
-  const res = await httpRequest({ url, params })
-  console.debug('[core-asset] getCollectionList: ', params, res)
-  // FIXME: handle error
-  if (res.error) return { total: 0, data: [] }
-  return res.data
 }
 
 export interface IGetCollectionNFTListParams {
@@ -139,7 +130,7 @@ export interface IGetCollectionNFTListResult {
 export const getCollectionNFTList = async (
   params: IGetCollectionNFTListParams
 ): Promise<IGetCollectionNFTListResult> => {
-  const url = `${BACKEND_HOST}/collection/nfts`
+  const url = `${await getHost()}/collection/nfts`
   const res = await httpRequest({ url, params })
   console.debug('[core-asset] getCollectionNFTList: ', params, res)
   // FIXME: handle error
@@ -151,16 +142,5 @@ export const getCollectionNFTList = async (
       collection_img: '',
       data: []
     }
-  return res.data
-}
-
-export const getCollectionById = async (
-  id: string
-): Promise<ICollectionItem | null> => {
-  const url = `${BACKEND_HOST}/collection?contract=${id}`
-  const res = await httpRequest({ url })
-  console.debug('[core-asset] getCollectionById: ', res)
-  // FIXME: handle error
-  if (res.error) return null
   return res.data
 }

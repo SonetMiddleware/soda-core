@@ -1,3 +1,4 @@
+import { Collection, NFT } from '@soda/soda-asset'
 import {
   isMetamaskConnected,
   registerMessage,
@@ -33,6 +34,70 @@ async function registerDaoMessageHandler(request: any) {
     response.error = e
   }
   return response
+}
+
+export interface CollectionDao {
+  collection: Collection
+  dao: DaoItem
+}
+export const getCollectionDaoList = async (params: {
+  address: string
+  offset?: number
+  limit?: number
+}): Promise<{ total: number; data: CollectionDao[] }> => {
+  const { address, offset, limit } = params
+  let page: number
+  if (offset && limit && limit > 0) page = Math.floor(offset / limit)
+  const collections = await Api.getCollectionList({
+    addr: address,
+    page,
+    gap: limit
+  })
+  const res = { total: collections.total, data: [] }
+  for (const c of collections.data) {
+    res.data.push({
+      collection: {
+        id: c.id,
+        name: c.name,
+        image: c.img
+      },
+      dao: toDaoItem(c.dao)
+    })
+  }
+  return res
+}
+export const getCollectionDaoByToken = async (
+  token: NFT
+): Promise<CollectionDao | null> => {
+  const item = await Api.getCollectionDaoByContract({
+    contract: token.contract,
+    chainId: token.chainId
+  })
+  if (!item) return null
+  return {
+    collection: {
+      id: item.id,
+      name: item.name,
+      image: item.img
+    },
+    dao: toDaoItem(item.dao)
+  }
+}
+
+export const getCollectionDaoByCollectionId = async (params: {
+  id: string
+  chainId?: number
+}): Promise<CollectionDao | null> => {
+  const item = await Api.getCollectionDaoByCollectionId(params)
+  if (!item) return null
+  return {
+    collection: {
+      id: item.id,
+      name: item.name,
+      image: item.img
+    },
+    dao: toDaoItem(item.dao)
+  }
 }
 
 export const bgInit = () => {

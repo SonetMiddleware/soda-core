@@ -18,7 +18,7 @@ export interface Proposal {
 export const createProposal = async (params: {
   creator: string
   snapshotBlock: number
-  collectionId: string
+  daoId: string
   title: string
   description: string
   startTime: number
@@ -31,7 +31,7 @@ export const createProposal = async (params: {
   const {
     creator,
     snapshotBlock,
-    collectionId,
+    daoId,
     title,
     description,
     startTime,
@@ -44,7 +44,7 @@ export const createProposal = async (params: {
   return await Api.createProposal({
     creator,
     snapshot_block: snapshotBlock,
-    collection_id: collectionId,
+    collection_id: daoId,
     title,
     description,
     start_time: startTime,
@@ -82,15 +82,15 @@ export const getProposalList = async (params: {
 export const getProposalDetail = async () => {}
 export const vote = async (params: {
   voter: string
-  collectionId: string
+  daoId: string
   proposalId: string
   item: string
   sig: string
 }) => {
-  const { voter, collectionId, proposalId, item, sig } = params
+  const { voter, daoId, proposalId, item, sig } = params
   return await Api.vote({
     voter,
-    collection_id: collectionId,
+    collection_id: daoId,
     proposal_id: proposalId,
     item,
     sig
@@ -98,24 +98,24 @@ export const vote = async (params: {
 }
 export const getUserVoteInfo = async (params: {
   proposalId: string
-  collectionId: string
+  daoId: string
   address: string
 }): Promise<{
-  collectionId: string
+  daoId: string
   id: string
   voter: string
   item: string
   votes: string
 } | null> => {
-  const { proposalId, collectionId, address } = params
+  const { proposalId, daoId, address } = params
   const res = await Api.getUserVoteInfo({
     proposal_id: proposalId,
-    collection_id: collectionId,
+    collection_id: daoId,
     addr: address
   })
   return res
     ? {
-        collectionId: res.collection_id,
+        daoId: res.collection_id,
         id: res.id,
         voter: res.voter,
         item: res.item,

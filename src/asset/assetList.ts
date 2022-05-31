@@ -1,5 +1,6 @@
-import { AssetType, NFT } from '@soda/soda-asset'
+import { AssetType, Function, invoke, NFT } from '@soda/soda-asset'
 import { getChainId } from '@soda/soda-util'
+import { getAssetServices } from './asset'
 import * as Api from './service/apis'
 
 export const getAssetList = async () => {}
@@ -26,38 +27,36 @@ export const getOwnedTokens = async (params: {
   chainId?: number
   contract?: string
   tokenId?: string
-  page?: number
-  gap?: number
+  offset?: number
+  limit?: number
 }): Promise<{
   total: number
   data: NFT[]
 }> => {
-  const { address, chainId: cid, contract, tokenId, page, gap } = params
-  const chainId = cid ? cid : await getChainId()
-  const tokens = await Api.getOwnedNFT({
-    addr: address,
-    // TODO: add chain id
-    contract,
-    token_id: tokenId,
-    page,
-    gap
-  })
-  const res = { total: tokens.total, data: [] }
-
-  for (const t of tokens.data) {
-    res.data.push(toToken(t, cid))
+  try {
+    const { names } = await getAssetServices({
+      chainId: params.chainId
+    })
+    if (names.length <= 0) throw new Error('No getOwnedTokens service found.')
+    // TODO: choose better mint service for now, first service only
+    const tokens = await invoke(names[0], Function.getOwnedTokens, params)
+    return tokens
+  } catch (e) {
+    console.error(e)
+    throw new Error('Error on getOwnedTokens ' + e)
   }
-  return res
 }
 
 export const getFavTokens = async (params: {
   address: string
   chainId?: number
   contract?: string
-  page?: number
-  gap?: number
+  offset?: number
+  limit?: number
 }): Promise<{ total: number; data: NFT[] }> => {
-  const { address, chainId: cid, contract: c, page, gap } = params
+  const { address, chainId: cid, contract: c, offset, limit } = params
+  let page: number
+  if (offset && limit && limit > 0) page = Math.floor(offset / limit)
   const chainId = cid ? cid : await getChainId()
   const contract = c ? c : DEFAULT_TOKENCONTRACT
   const tokens = await Api.getFavNFT({
@@ -65,7 +64,7 @@ export const getFavTokens = async (params: {
     // TODO: add chain id
     contract,
     page,
-    gap
+    gap: limit
   })
   const res = { total: tokens.total, data: [] }
   for (const t of tokens.data) {

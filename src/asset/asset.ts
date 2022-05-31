@@ -82,10 +82,9 @@ export const mint = async (meta: {
       storeCallback,
       mintCallback
     } = meta
-    const cid = await getChainId(chainId)
-    const { names } = await getAssetServices({
+    const { names, chainId: cid } = await getAssetServices({
       services: service ? [service] : null,
-      chainId: cid
+      chainId
     })
     if (names.length <= 0) throw new Error('No mint service found.')
     if (preCallback) preCallback()
