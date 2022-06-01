@@ -55,13 +55,19 @@ export const getCollectionDaoList = async (params: {
   })
   const res = { total: collections.total, data: [] }
   for (const c of collections.data) {
+    const dao = c.dao
+    // TODO: DAO share the same id with collection
+    if (dao) {
+      if (!dao.id) dao.id = c.id
+      if (!dao.img) dao.img = c.img
+    }
     res.data.push({
       collection: {
         id: c.id,
         name: c.name,
         image: c.img
       },
-      dao: toDaoItem(c.dao)
+      dao: toDaoItem(dao)
     })
   }
   return res
@@ -74,13 +80,19 @@ export const getCollectionDaoByToken = async (
     chainId: token.chainId
   })
   if (!item) return null
+  const dao = item.dao
+  // TODO: DAO share the same id with collection
+  if (dao) {
+    if (!dao.id) dao.id = item.id
+    if (!dao.img) dao.img = item.img
+  }
   return {
     collection: {
       id: item.id,
       name: item.name,
       image: item.img
     },
-    dao: toDaoItem(item.dao)
+    dao: toDaoItem(dao)
   }
 }
 
@@ -90,13 +102,19 @@ export const getCollectionDaoByCollectionId = async (params: {
 }): Promise<CollectionDao | null> => {
   const item = await Api.getCollectionDaoByCollectionId(params)
   if (!item) return null
+  const dao = item.dao
+  // TODO: DAO share the same id with collection
+  if (dao) {
+    if (!dao.id) dao.id = item.id
+    if (!dao.img) dao.img = item.img
+  }
   return {
     collection: {
       id: item.id,
       name: item.name,
       image: item.img
     },
-    dao: toDaoItem(item.dao)
+    dao: toDaoItem(dao)
   }
 }
 
