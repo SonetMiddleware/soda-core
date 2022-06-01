@@ -11,7 +11,12 @@ const MessageTypes = {
   Register_DAO: 'Register_DAO'
 }
 
-export const registerDao = async (info: any) => {
+export const registerDao = async (info: {
+  collectionId: string
+  name: string
+  facebook?: string
+  twitter?: string
+}) => {
   const res: any = await sendMessage({
     type: MessageTypes.Register_DAO,
     request: info
