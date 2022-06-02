@@ -155,8 +155,7 @@ export const createProposal = async (params: ICreateProposalParams) => {
   const url = `${await getHost()}/proposal/create`
   const res = await httpRequest({ url, params, type: HttpRequestType.POST })
   console.debug('[core-dao] createProposal: ', res)
-  if (res.error) return false
-  return true
+  return res
 }
 
 export interface IVoteProposalParams {

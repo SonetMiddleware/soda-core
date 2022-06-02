@@ -154,11 +154,13 @@ export const toDaoItem = (d: Api.IDaoItem): DaoItem => {
 export const createDao = async () => {}
 export const getDaoList = async (params: {
   address?: string
-  page: number
-  gap: number
+  offset?: number
+  limit?: number
 }): Promise<{ total: number; data: DaoItem[] }> => {
-  const { address, page, gap } = params
-  const daos = await Api.getDaoList({ addr: address, page, gap })
+  const { address, offset, limit } = params
+  let page: number
+  if (offset && limit && limit > 0) page = Math.floor(offset / limit)
+  const daos = await Api.getDaoList({ addr: address, page, gap: limit })
   const res = { total: daos.total, data: [] }
   for (const d of daos.data) {
     res.data.push(toDaoItem(d))
