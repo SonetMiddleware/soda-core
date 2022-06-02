@@ -7,12 +7,11 @@ import {
 
 export const requestSignMsg = async (msg: string, address: string) => {
   const web3 = createWeb3()
-  console.log('requestSignMsg: ', msg, address)
   try {
     const signParams = [msg, address]
     const method = 'personal_sign'
     const res = await web3.eth.personal.sign(msg, address, '')
-    console.log('SignXXXXXXXXXXXXXXXXXXX:', msg, address, res)
+    console.debug('[core] requestSignMsg: ', msg, address, res)
     return res
   } catch (err) {
     console.error(err)
