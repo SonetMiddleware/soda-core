@@ -198,6 +198,8 @@ export const getCacheMedia = async (meta: {
       source,
       attachInfo: attachInfo
     })
+    if (!cacheSrc)
+      throw new Error('[core] error on getCacheMedia: empty source')
     if (!withMask) return cacheSrc
     const mask = generateTokenMask(token)
     const qrcode = await generateQrCodeBase64(mask)

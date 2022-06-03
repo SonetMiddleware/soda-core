@@ -65,6 +65,7 @@ export const getCollectionDaoList = async (params: {
     if (dao) {
       if (!dao.id) dao.id = c.id
       if (!dao.img) dao.img = c.img
+      if (!dao.name) dao.name = c.name
     }
     res.data.push({
       collection: {
@@ -90,6 +91,7 @@ export const getCollectionDaoByToken = async (
   if (dao) {
     if (!dao.id) dao.id = item.id
     if (!dao.img) dao.img = item.img
+    if (!dao.name) dao.name = item.name
   }
   return {
     collection: {
@@ -112,6 +114,7 @@ export const getCollectionDaoByCollectionId = async (params: {
   if (dao) {
     if (!dao.id) dao.id = item.id
     if (!dao.img) dao.img = item.img
+    if (!dao.name) dao.name = item.name
   }
   return {
     collection: {
