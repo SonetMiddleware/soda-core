@@ -130,8 +130,8 @@ export const getToken = async (params: {
 }
 
 export const getRole = async (meta: { token: NFT }): Promise<NFT> => {
+  const { token } = meta
   try {
-    const { token } = meta
     const { names } = await getAssetServices({
       chainId: token.chainId
     })
@@ -139,11 +139,10 @@ export const getRole = async (meta: { token: NFT }): Promise<NFT> => {
     const { owner, minter } = await invoke(names[0], Function.getRole, token)
     token.owner = owner
     token.minter = minter
-    return token
   } catch (e) {
-    console.error(e)
-    throw new Error('Error to get asset role info ' + e)
+    console.error('[core] error on getRole: ', e)
   }
+  return token
 }
 export const getBalance = async (meta: {
   cache: TokenCache
@@ -166,20 +165,26 @@ export const getBalance = async (meta: {
   }
 }
 
-export const loadSource = async (meta: { token: NFT; storageConfig?: any }) => {
-  try {
-    const { token, storageConfig } = meta
-    const source = await load(token.meta.storage, {
-      uri: token.source,
-      config: storageConfig
-    })
-    return source
-  } catch (e) {
-    console.error(e)
-    throw new Error('Error to load source ' + e)
-  }
+export const getTokenSource = async (meta: {
+  token: NFT
+  storageConfig?: any
+}) => {
+  const { token, storageConfig } = meta
+  let config = storageConfig ? storageConfig : { uri: true }
+  if (!token || !token.source) return ''
+  const storageService = token.meta.storage || 'ipfs'
+  // FIXME: find faster network, add market source to get quicker uri for now
+  let marketSource = ''
+  const conf = getAppConfig(token.chainId)
+  if (token && token.chainId && conf) marketSource = conf.mpService[0]
+  config.source = marketSource
+  // shall handle load error
+  const source = await load(storageService, {
+    uri: token.source,
+    config
+  })
+  return source
 }
-
 export const getCacheMedia = async (meta: {
   token: NFT
   storageConfig?: any
@@ -188,10 +193,7 @@ export const getCacheMedia = async (meta: {
 }) => {
   try {
     const { token, storageConfig, attachInfo, withMask } = meta
-    const source = await load(token.meta.storage, {
-      uri: token.source,
-      config: storageConfig
-    })
+    const source = await getTokenSource({ token, storageConfig })
     const cacheSrc = await getCacheImage(token.meta.type, {
       source,
       attachInfo: attachInfo
@@ -207,7 +209,7 @@ export const getCacheMedia = async (meta: {
   }
 }
 
-export const getTokenFromCacheMedia = async (imgSrc: string) => {
+const getTokenFromCacheMedia = async (imgSrc: string) => {
   if (!imgSrc) return null
   let mask: string
   try {
@@ -221,42 +223,37 @@ export const getTokenFromCacheMedia = async (imgSrc: string) => {
   console.debug('[core-asset] getTokenFromCacheMedia: ', mask)
   return await decodeMask(mask || '')
 }
-export const getTokenSource = async (token: NFT) => {
-  if (!token || !token.source) return ''
-  const storageService = token.meta.storage || 'ipfs'
-  // FIXME: find faster network, add market source to get quicker uri for now
-  let marketSource = ''
-  const conf = getAppConfig(token.chainId)
-  if (token && token.chainId && conf) marketSource = conf.mpService[0]
-  const source = await load(storageService, {
-    uri: token.source,
-    config: { uri: true, source: marketSource }
-  })
-  return source
-}
 export const renderTokenFromCacheMedia = async (
   imgSrc: string,
   meta: { dom: HTMLDivElement; config?: any }
 ) => {
-  const token: NFT = await getTokenFromCacheMedia(imgSrc)
-  return await renderToken(token, meta)
+  try {
+    const token: NFT = await getTokenFromCacheMedia(imgSrc)
+    return await renderToken(token, meta)
+  } catch (e) {
+    console.debug('[core] error on renderTokenFromCacheMedia: ', e)
+    return null
+  }
 }
 
-export const renderToken = async (
+const renderToken = async (
   token: NFT,
   meta: { dom: HTMLDivElement; config?: any }
 ) => {
-  const res = { token, result: false }
-  if (!token) return res
-  const { dom, config } = meta
-  const source = await getTokenSource(token)
-  if (!source) return res
-  const mediaType = token.meta.type || 'image'
-  res.result = await render(mediaType, {
-    source,
-    dom: dom,
-    config: config
-  })
+  const res = { token, result: token ? true : false }
+  try {
+    const { dom, config } = meta
+    const source = await getTokenSource({ token })
+    if (!source) return res
+    const mediaType = token.meta.type || 'image'
+    res.result = await render(mediaType, {
+      source,
+      dom: dom,
+      config: config
+    })
+  } catch (e) {
+    console.debug('[core] error on renderToken: ', e)
+  }
   return res
 }
 

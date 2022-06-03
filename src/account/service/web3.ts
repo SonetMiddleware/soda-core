@@ -34,7 +34,7 @@ export const sign = async (request: { message: string; address: string }) => {
     return res
   } catch (e) {
     console.error(e)
-    response.error = e
+    response.error = (e as any).message || e
   }
   return response
 }
@@ -51,7 +51,7 @@ async function signMessageHandler(request: any) {
     response.result = res
   } catch (e) {
     console.error(e)
-    response.error = e
+    response.error = (e as any).message || e
   }
   return response
 }
