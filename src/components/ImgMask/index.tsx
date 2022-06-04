@@ -209,6 +209,10 @@ function ImgMask(props: {
       window.open(
         `https://opensea.io/assets/ethereum/${props.meta.contract}/${props.meta.tokenId}`
       )
+    } else if (props.meta.chainId === 137) {
+      window.open(
+        `https://opensea.io/assets/matic/${props.meta.contract}/${props.meta.tokenId}`
+      )
     } else if (orderId) {
       window.open(`https://nash.market/detail/${orderId}`, '_blank')
     } else {
@@ -402,7 +406,7 @@ function ImgMask(props: {
                 </div>
               </Popover>
             )}
-            {tokenId && (
+            {tokenId && source && (
               <Popover
                 placement="bottom"
                 title={'Share'}

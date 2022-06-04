@@ -45,6 +45,7 @@
     "antd": "^4.19.3",
     "awesome-qr": "^2.1.5-rc.0",
     "axios": "^0.21.1",
+    "cids": "^1.1.9",
     "classnames": "^2.3.1",
     "clipboard.js": "^1.0.1",
     "ipfs-http-client": "^52.0.0",

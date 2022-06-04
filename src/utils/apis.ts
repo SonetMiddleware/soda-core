@@ -6,7 +6,8 @@ import { getChainId } from '../utils/messageHandler'
 const Host_Map: Record<number, string> = {
   80001: 'https://testapi2.platwin.io:49336/api/v1',
   4: 'https://testapi3.platwin.io:59336/api/v1',
-  1: 'https://api.platwin.io:8081/api/v1'
+  1: 'https://api.platwin.io:8081/api/v1',
+  137: 'https://matic-api.platwin.io:8082/api/v1'
 }
 let BACKEND_HOST = '' //'https://testapi.platwin.io/api/v1';
 getChainId().then((chainId) => {

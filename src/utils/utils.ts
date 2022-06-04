@@ -5,7 +5,7 @@ import { CustomEvents } from './eventDispatch'
 import { getChainId, MessageTypes, sendMessage } from './messageHandler'
 import { getAssetServices } from '@soda/soda-asset'
 import { getAppConfig } from '@soda/soda-package-index'
-
+const CID = require('cids')
 // import * as moment from 'moment'
 const moment = require('moment')
 
@@ -290,7 +290,7 @@ export const decodeHexBase64 = (b64: string) => {
   return res
 }
 
-export const MAINNET_CHAIN_ID = [4, 1] // 1
+export const MAINNET_CHAIN_ID = [4, 1, 137] // 1
 export const isMainNet = async () => {
   const chainId = await getChainId()
   return chainId && MAINNET_CHAIN_ID.includes(Number(chainId))
@@ -327,7 +327,11 @@ const formatIPFSUri = (uri: string) => {
     if (source.indexOf('/') > 0) {
       source = `https://ipfs.io/ipfs/${source}`
     } else {
+      if (source.startsWith('Qm')) {
+        source = new CID(source).toV1().toString('base32')
+      }
       source = `https://${source}.ipfs.dweb.link/`
+      // source = `https://ipfs.infura.io/ipfs/${source}`
     }
   }
   return source

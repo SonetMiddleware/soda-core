@@ -7,7 +7,11 @@ import { IOwnedNFTData, retrieveAssets } from '../../../utils/apis'
 import { getOwnedNFT } from '../../../utils/apis'
 import * as QrCode from '../../../utils/qrcode'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
-import { generateMetaForQrcode, PlatwinContracts } from '@/utils/utils'
+import {
+  generateMetaForQrcode,
+  getNFTSource,
+  PlatwinContracts
+} from '@/utils/utils'
 import { getChainId } from '@/utils/messageHandler'
 
 interface IProps {
@@ -38,8 +42,19 @@ export default (props: IProps) => {
             }
             const nfts = await getOwnedNFT(params)
             console.log('ownedNFTs: ', nfts)
-            setOwnedNFTs([])
+            if (nfts.data) {
+              const images = await Promise.all(
+                nfts.data.map((item) => {
+                  return getNFTSource(item.uri)
+                })
+              )
+              nfts.data.forEach((item, index) => {
+                item.uri = images[index]
+              })
+            }
+
             setOwnedNFTs(nfts.data)
+
             setTotal(nfts.total)
             setPage(page)
             setLoading(false)
