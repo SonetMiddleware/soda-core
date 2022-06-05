@@ -14,10 +14,16 @@ export const registerDao = async (params: any) => {
     RegisterDaoAbi.abi as AbiItem[],
     Contracts.DaoRegistery[CHAIN_ID]
   )
+  const sendArgs: any = {
+    from: account
+  }
+  if (CHAIN_ID === 137) {
+    sendArgs.type = '0x01'
+  }
   return new Promise((resolve, reject) => {
     daoContract.methods
       .createDao(collectionId, name, facebook, twitter)
-      .send({ from: account })
+      .send(sendArgs)
       .on('receipt', function (receipt: any) {
         resolve(true)
       })
