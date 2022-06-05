@@ -10,6 +10,7 @@ import * as PubSub from 'pubsub-js'
 import FavNFTList from './FavNFTList'
 import OwnedNFTList from './OwnedNFTList'
 import UploadNFT from './UploadNFT'
+import { isMainNet } from '@/utils/utils'
 const { TabPane } = Tabs
 interface IProps {
   onClose?: () => void
@@ -20,6 +21,8 @@ function ResourceDialog(props: IProps) {
   const [show, setShow] = useState(false)
   const [account, setAccount] = useState('')
   const [tab, setTab] = useState('1')
+  const [isCurrentMainnet, setIsCurrentMainNet] = useState(false)
+
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -45,6 +48,8 @@ function ResourceDialog(props: IProps) {
       console.log('get account: ', resp)
       const { account } = resp.result
       setAccount(account)
+      const isMain = await isMainNet()
+      setIsCurrentMainNet(isMain)
     })()
   }, [])
 
@@ -72,12 +77,13 @@ function ResourceDialog(props: IProps) {
               setTab(key)
             }}>
             <TabPane tab="My Favorite" key="1" className="fav-list" />
-            <TabPane tab="Mint" key="2" />
+            {!isCurrentMainnet && <TabPane tab="Mint" key="2" />}
             <TabPane tab="NFT Portfolio" key="3" className="fav-list" />
           </Tabs>
           <div className="tab-content">
             {tab === '1' && (
               <FavNFTList
+                isCurrentMainnet={isCurrentMainnet}
                 account={account}
                 publishFunc={afterFavHandleFinish}
               />
@@ -87,6 +93,7 @@ function ResourceDialog(props: IProps) {
             )}
             {tab === '3' && (
               <OwnedNFTList
+                isCurrentMainnet={isCurrentMainnet}
                 account={account}
                 publishFunc={afterFavHandleFinish}
               />

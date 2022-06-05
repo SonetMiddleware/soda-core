@@ -42,7 +42,9 @@ export default function BindTwitterIdBox(props: IProps) {
     await navigator.clipboard.writeText(content)
     newPostTrigger()
     Notification.success(
-      'The binding post is generated. Please tweet/post this message to pulish your binding relationship.'
+      `Click into your ${
+        platform === PLATFORM.Twitter ? 'tweet box' : 'status bar'
+      } and paste the binding message from your clipboard. Then post to finish the bind.`
     )
     setShow(false)
     // await pasteShareTextToEditor(content)
@@ -75,6 +77,7 @@ export default function BindTwitterIdBox(props: IProps) {
         setShow(false)
       } else {
         setShow(true)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
     })()
@@ -195,7 +198,7 @@ export default function BindTwitterIdBox(props: IProps) {
         <div>
           <p className="title">You need to send post to finish the binding.</p>
           <div className="bind-btns">
-            <button className="btn-primary" onClick={handleBind}>
+            <button className="soda-btn-primary" onClick={handleBind}>
               Send Post
             </button>
             <a

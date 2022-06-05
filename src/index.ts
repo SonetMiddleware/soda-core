@@ -1,12 +1,12 @@
-import imageKitInit from '@soda/soda-image-kit'
-import { getMediaTypes } from '@soda/soda-media-sdk'
+// import imageKitInit from '@soda/soda-image-kit'
+// import { getMediaTypes } from '@soda/soda-media-sdk'
 
-import ipfsKitInit from '@soda/soda-ipfs-kit'
-import { getStorageService } from '@soda/soda-storage-sdk'
+// import ipfsKitInit from '@soda/soda-ipfs-kit'
+// import { getStorageService } from '@soda/soda-storage-sdk'
 
-import nashmarketInit from '@soda/soda-nashmarket'
-import { getMarketPlaces } from '@soda/soda-mp-sdk'
-
+// import nashmarketInit from '@soda/soda-nashmarket'
+// import { getMarketPlaces } from '@soda/soda-mp-sdk'
+import PackageIndexInit from '@soda/soda-package-index'
 import { registerChain } from './utils/chains'
 
 import BindTwitterIdBox from './components/BindTwitterIdBox'
@@ -17,7 +17,7 @@ import ResourceDialog from './components/ResourceDialog'
 import FavNFTList from './components/ResourceDialog/FavNFTList'
 import OwnedNFTList from './components/ResourceDialog/OwnedNFTList'
 import UploadNFT from './components/ResourceDialog/UploadNFT'
-
+import ListNoData from './components/NoDataList'
 export {
   BindTwitterIdBox,
   Button,
@@ -26,9 +26,9 @@ export {
   ResourceDialog,
   FavNFTList,
   OwnedNFTList,
-  UploadNFT
+  UploadNFT,
+  ListNoData
 }
-
 export * from './utils/apis'
 export * from './utils/handleShare'
 export * from './utils/imgHandler'
@@ -41,28 +41,26 @@ export * from './utils/utils'
 export * from './utils/ipfsHandler'
 
 const initialize = () => {
-  imageKitInit()
-  ipfsKitInit()
-  nashmarketInit()
+  PackageIndexInit()
 
-  registerChain({
-    name: 'eth-mainnet',
-    meta: {
-      chainid: 1,
-      rpc: 'https://mainnet.infura.io/v3/',
-      symbol: 'ETH',
-      explorer: 'https://etherscan.io'
-    }
-  })
-  registerChain({
-    name: 'HECO',
-    meta: {
-      chainid: 128,
-      rpc: 'https://http-mainnet.hecochain.com',
-      symbol: 'HT',
-      explorer: 'https://scan.hecochain.com'
-    }
-  })
+  // registerChain({
+  //   name: 'eth-mainnet',
+  //   meta: {
+  //     chainid: 1,
+  //     rpc: 'https://mainnet.infura.io/v3/',
+  //     symbol: 'ETH',
+  //     explorer: 'https://etherscan.io'
+  //   }
+  // })
+  // registerChain({
+  //   name: 'HECO',
+  //   meta: {
+  //     chainid: 128,
+  //     rpc: 'https://http-mainnet.hecochain.com',
+  //     symbol: 'HT',
+  //     explorer: 'https://scan.hecochain.com'
+  //   }
+  // })
 }
 
 export default initialize

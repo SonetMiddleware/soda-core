@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import * as ReactDOM from 'react-dom'
 import './index.less'
 import {
   MessageTypes,
   sendMessage,
   getMinter,
   getOwner,
-  getUserAccount
+  getUserAccount,
+  getChainId
 } from '../../utils/messageHandler'
 import {
   getTwitterBindResult,
@@ -13,9 +15,14 @@ import {
   addToFav,
   getFavNFT,
   PLATFORM,
-  IBindResultData
+  IBindResultData,
+  ICollectionItem,
+  retrieveAssets,
+  retrieveAsset,
+  IDaoItem,
+  getCollectionWithContract
 } from '../../utils/apis'
-import { Popover, message, Button } from 'antd'
+import { Popover, message, Button, Modal } from 'antd'
 import { ipfsAdd } from '../../utils/ipfsHandler'
 import { mixWatermarkImg } from '../../utils/imgHandler'
 import * as QrCode from '../../utils/qrcode'
@@ -34,12 +41,24 @@ import IconOwnerRole from '../../assets/images/icon-owner-role.png'
 import IconOwner from '../../assets/images/icon-owner.png'
 import IconShare from '../../assets/images/icon-share.png'
 import IconSource from '../../assets/images/icon-source.png'
-// import { pasteShareTextToEditor } from '../../utils/utils'
+import IconDao from '../../assets/images/icon-dao.svg'
+import IconProposal from '../../assets/images/icon-proposal.svg'
+import IconMinterOwner from '../../assets/images/icon-minter-owner.png'
+import ProposalModal from '../ProposalModal'
+import { IconShareFB, IconShareTwitter } from './icon'
 
+import {
+  delay,
+  generateMetaForQrcode,
+  isMainNet,
+  MAINNET_CHAIN_ID
+} from '../../utils/utils'
+import { getStorageService } from '@soda/soda-storage-sdk'
+import { NFTInfo } from '@soda/soda-asset'
 const PlatwinMEME2WithoutRPC = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
 
 function ImgMask(props: {
-  meta: string[]
+  meta: NFTInfo
   originImgSrc: string
   username: string
 }) {
@@ -53,14 +72,17 @@ function ImgMask(props: {
   const [ownerPlatformAccount, setOwnerPlatformAccount] = useState<
     IBindResultData[]
   >([])
+  const [isCurrentMainnet, setIsCurrentMainNet] = useState(false)
   const [account, setAccount] = useState('')
   const [owner, setOwner] = useState('')
   const [minter, setMinter] = useState('')
-
-  const [hash, tokenId] = props.meta
+  const [collection, setCollection] = useState<ICollectionItem>()
+  const [dao, setDao] = useState<IDaoItem>()
+  const [currentChainId, setCurrentChainId] = useState()
+  const [proposalModalShow, setProposalModalShow] = useState(false)
+  const { chainId, contract, tokenId, source } = props.meta
   const { username } = props
   console.log('props.meta: ', props.meta)
-  const ipfsOrigin = `https://${hash}.ipfs.dweb.link/`
 
   const isOwner = useMemo(() => {
     if (ownerPlatformAccount.find((item) => item.tid === username)) {
@@ -83,10 +105,13 @@ function ImgMask(props: {
     return isOwner && isMinter
   }, [isOwner, isMinter])
 
-  const fetchInfo = async () => {
+  const fetchInfo = async (isMain: boolean) => {
     console.log('>>>>>>>>>>>>>fetchInfo: ', tokenId)
-    const ownerAddress = await getOwner(tokenId)
-    const minterAddress = await getMinter(tokenId)
+    const ownerAddress = await getOwner(contract, tokenId)
+    let minterAddress = ''
+    if (!isMain) {
+      minterAddress = await getMinter(tokenId)
+    }
 
     console.log('ownerAddress: ', ownerAddress, tokenId)
     console.log('minterAddress: ', minterAddress, tokenId)
@@ -101,13 +126,15 @@ function ImgMask(props: {
     console.log('ownerBindings: ', bindings)
 
     setOwnerPlatformAccount(bindings)
-    const minterBindResult =
-      (await getTwitterBindResult({
-        addr: minterAddress
-      })) || []
-    const minterBindings = minterBindResult.filter((item) => item.content_id)
-    setMinterPlatformAccount(minterBindings)
-    console.log('minterBindings: ', minterBindings)
+    if (minterAddress) {
+      const minterBindResult =
+        (await getTwitterBindResult({
+          addr: minterAddress
+        })) || []
+      const minterBindings = minterBindResult.filter((item) => item.content_id)
+      setMinterPlatformAccount(minterBindings)
+      console.log('minterBindings: ', minterBindings)
+    }
 
     const order = await getOrderByTokenId(tokenId)
     console.log('order: ', order)
@@ -119,28 +146,41 @@ function ImgMask(props: {
 
   useEffect(() => {
     ;(async () => {
+      const currentChainId = await getChainId()
+      setCurrentChainId(currentChainId)
       const addr = await getUserAccount()
       setAccount(addr)
+      const isMain = await isMainNet()
+      setIsCurrentMainNet(isMain)
       console.log('userAccount: ', addr)
-      if (props.meta && props.meta.length > 1) {
-        fetchInfo()
+      if (tokenId) {
+        await fetchInfo(isMain)
         const favNFTs = await getFavNFT({
           addr,
-          contract: PlatwinMEME2WithoutRPC
+          contract: contract
         })
-        if (favNFTs.data.some((item) => item.token_id === Number(tokenId))) {
+        if (
+          favNFTs &&
+          favNFTs.data &&
+          favNFTs.data.some((item) => item.token_id === Number(tokenId))
+        ) {
           setIsInFav(true)
         }
+        fetchCollectionInfo()
       }
     })()
   }, [props.meta])
 
-  const getPlatformUserHomepage = (data: IBindResultData) => {
-    if (data.platform === PLATFORM.Facebook) {
-      const url = `https://www.facebook.com/${data.tid}`
-      return url
-    } else if (data.platform === PLATFORM.Twitter) {
-      const url = `https://twitter.com/${data.tid}`
+  const getPlatformUserHomepage = (data: IBindResultData[]) => {
+    for (const item of data) {
+      if (item.platform === PLATFORM.Twitter) {
+        const url = `https://www.twitter.com/${item.tid}`
+        return url
+      }
+    }
+
+    if (data[0] && data[0].platform === PLATFORM.Facebook) {
+      const url = `https://www.facebook.com/${data[0].tid}`
       return url
     }
   }
@@ -148,20 +188,32 @@ function ImgMask(props: {
   const toMinterTwitter = (e) => {
     e.stopPropagation()
     if (minterPlatformAccount[0]) {
-      const url = getPlatformUserHomepage(minterPlatformAccount[0])
+      const url = getPlatformUserHomepage(minterPlatformAccount)
       window.open(url, '_blank')
     }
   }
   const toOwnerTwitter = (e) => {
     e.stopPropagation()
     if (ownerPlatformAccount[0]) {
-      const url = getPlatformUserHomepage(ownerPlatformAccount[0])
+      const url = getPlatformUserHomepage(ownerPlatformAccount)
       window.open(url, '_blank')
     }
   }
   const handleToMarket = (e) => {
     e.stopPropagation()
-    if (orderId) {
+    if (props.meta.chainId === 4) {
+      window.open(
+        `https://testnets.opensea.io/assets/rinkeby/${props.meta.contract}/${props.meta.tokenId}`
+      )
+    } else if (props.meta.chainId === 1) {
+      window.open(
+        `https://opensea.io/assets/ethereum/${props.meta.contract}/${props.meta.tokenId}`
+      )
+    } else if (props.meta.chainId === 137) {
+      window.open(
+        `https://opensea.io/assets/matic/${props.meta.contract}/${props.meta.tokenId}`
+      )
+    } else if (orderId) {
       window.open(`https://nash.market/detail/${orderId}`, '_blank')
     } else {
       window.open(`http://nash.market/detail/-1`, '_blank')
@@ -175,7 +227,8 @@ function ImgMask(props: {
     setMintLoading(true)
     // 1. upload to ipfs
     message.info('Uploading your resource to IPFS...', 5)
-    const hash = await ipfsAdd(props.originImgSrc)
+    // const hash = await ipfsAdd(props.originImgSrc)
+    const hash = getStorageService('ipfs').storeFunc(props.originImgSrc)
     console.log('hash: ', hash)
     // 3. mint NFT
     const req = {
@@ -194,13 +247,13 @@ function ImgMask(props: {
       return
     }
     message.success(
-      'Your NFT is minted and copyed. Please paste into the new post dialog',
+      'Your NFT is minted and copied. Please paste into the new post dialog',
       5
     )
     setMintLoading(false)
     // 2. create meta
-    // t for twitter
-    const meta = `${hash}_${tokenId}`
+    const chainId = await getChainId()
+    const meta = generateMetaForQrcode(chainId, PlatwinMEME2WithoutRPC, tokenId)
     console.log('meta: ', meta)
     // 4. create watermask
     const qrcode = await QrCode.generateQrCodeBase64(meta)
@@ -219,7 +272,8 @@ function ImgMask(props: {
   }
 
   const handleShare = async () => {
-    await saveLocal(StorageKeys.SHARING_NFT_META, props.meta.join('_'))
+    const metaStr = generateMetaForQrcode(chainId, contract, Number(tokenId))
+    await saveLocal(StorageKeys.SHARING_NFT_META, metaStr)
     const targetUrl = window.location.href.includes('twitter')
       ? 'https://www.facebook.com'
       : 'https://www.twitter.com'
@@ -230,26 +284,17 @@ function ImgMask(props: {
     <div className="img-mask-share">
       <ul>
         <li>
-          <Button
-            type="link"
-            target="_blank"
+          <IconShareTwitter
+            onClick={handleShare}
             disabled={window.location.href.includes('twitter')}
-            onClick={handleShare}>
-            Share to Twitter <ArrowRightOutlined />{' '}
-          </Button>
+          />
         </li>
         <li>
-          <Button
-            type="link"
-            target="_blank"
+          <IconShareFB
             disabled={window.location.href.includes('facebook')}
-            onClick={handleShare}>
-            Share to Facebook <ArrowRightOutlined />{' '}
-          </Button>
+            onClick={handleShare}
+          />
         </li>
-        {/* <li>
-                    <a href="" target="_blank" >Share to Instagram <ArrowRightOutlined /> </a>
-                </li> */}
       </ul>
     </div>
   )
@@ -259,10 +304,10 @@ function ImgMask(props: {
       const addr = await getUserAccount()
       const params = {
         addr,
-        contract: PlatwinMEME2WithoutRPC,
+        contract: contract,
         token_id: tokenId,
         fav: 1,
-        uri: hash
+        uri: source
       }
       await addToFav(params)
       setIsInFav(true)
@@ -273,10 +318,39 @@ function ImgMask(props: {
     }
   }
 
+  const fetchCollectionInfo = async () => {
+    const collection = await getCollectionWithContract(contract) // TODO:get contract from meta
+    setCollection(collection)
+    if (collection.dao) {
+      setDao(collection.dao)
+    }
+  }
+
+  const toDaoPage = async (e: any) => {
+    e.stopPropagation()
+    const uri = `daoDetail?dao=${collection.id}`
+    const req = {
+      type: MessageTypes.Open_OptionPage,
+      request: {
+        uri
+      }
+    }
+    sendMessage(req)
+  }
+
+  const onCloseProposalModal = () => {
+    setProposalModalShow(false)
+  }
+
+  const toProposal = (e: any) => {
+    e.stopPropagation()
+    setProposalModalShow(true)
+  }
+
   return (
     <div className="img-mask-container">
       <div className="img-mask-icon">
-        {props.meta.length === 0 && (
+        {!isCurrentMainnet && !tokenId && (
           <Popover content="Mint">
             <FontAwesomeIcon
               style={{ cursor: 'pointer' }}
@@ -289,7 +363,7 @@ function ImgMask(props: {
           </Popover>
         )}
 
-        {props.meta.length > 0 && !showMenuMore && (
+        {tokenId && !showMenuMore && (
           <Popover content="Expand toolbar">
             <div
               className="toolbar-icon"
@@ -304,7 +378,7 @@ function ImgMask(props: {
 
         {showMenuMore && (
           <div className="img-mask-icon-list" style={{ display: 'flex' }}>
-            {props.meta.length > 0 && (
+            {tokenId && (
               <Popover content="Shrink toolbar">
                 <div
                   className="toolbar-icon"
@@ -316,24 +390,30 @@ function ImgMask(props: {
                 </div>
               </Popover>
             )}
-            {props.meta.length > 0 && (
+            {tokenId && source && (
               <Popover content="View source">
                 <div
                   className="toolbar-icon"
                   onClick={(e) => {
                     e.stopPropagation()
-                    window.open(ipfsOrigin, '_blank')
+                    const url =
+                      source && source.startsWith('http')
+                        ? source
+                        : `https://${source}.ipfs.dweb.link/`
+                    window.open(url, '_blank')
                   }}>
                   <img src={IconSource} alt="" />
                 </div>
               </Popover>
             )}
-            {props.meta.length > 0 && (
+            {tokenId && source && (
               <Popover
                 placement="bottom"
                 title={'Share'}
                 content={shareContent}
-                trigger="hover">
+                trigger="hover"
+                overlayClassName="toolbar-share"
+                className="toolbar-share">
                 <div className="toolbar-icon">
                   <img src={IconShare} alt="" />
                 </div>
@@ -348,13 +428,16 @@ function ImgMask(props: {
               </Popover>
             }
 
-            {account && props.meta.length > 0 && !isInFav && (
-              <Popover content="Add to fav">
-                <div className="toolbar-icon" onClick={handleAddToFav}>
-                  <img src={IconFav} alt="" />
-                </div>
-              </Popover>
-            )}
+            {Number(chainId) === Number(currentChainId) &&
+              account &&
+              tokenId &&
+              !isInFav && (
+                <Popover content="Add to fav">
+                  <div className="toolbar-icon" onClick={handleAddToFav}>
+                    <img src={IconFav} alt="" />
+                  </div>
+                </Popover>
+              )}
 
             {!isBothMinterOwner && !isOwner && ownerPlatformAccount.length > 0 && (
               <Popover content="View owner">
@@ -372,6 +455,20 @@ function ImgMask(props: {
                   </div>
                 </Popover>
               )}
+            {dao && (
+              <Popover content="DAO">
+                <div className="toolbar-icon" onClick={toDaoPage}>
+                  <img src={IconDao} alt="" />
+                </div>
+              </Popover>
+            )}
+            {dao && (
+              <Popover content="Proposal">
+                <div className="toolbar-icon" onClick={toProposal}>
+                  <img src={IconProposal} alt="" />
+                </div>
+              </Popover>
+            )}
           </div>
         )}
         {!isBothMinterOwner && isOwner && (
@@ -391,34 +488,17 @@ function ImgMask(props: {
         {isBothMinterOwner && (
           <Popover content="This is the minter & owner">
             <div className="toolbar-icon" onClick={toMinterTwitter}>
-              <svg
-                width="17"
-                height="18"
-                viewBox="0 0 17 18"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M7.2514 10.6147V17.1467H0C0 15.4143 0.763985 13.7529 2.12389 12.5279C3.48379 11.3029 5.32821 10.6147 7.2514 10.6147V10.6147ZM12.69 16.7385L10.026 18L10.5345 15.3284L8.3799 13.4357L11.3584 13.0454L12.69 10.6147L14.0224 13.0454L17 13.4357L14.8454 15.3284L15.353 18L12.69 16.7385ZM7.2514 9.79814C4.2466 9.79814 1.81285 7.60581 1.81285 4.89907C1.81285 2.19233 4.2466 0 7.2514 0C10.2562 0 12.69 2.19233 12.69 4.89907C12.69 7.60581 10.2562 9.79814 7.2514 9.79814Z"
-                  fill="url(#paint0_linear_64:366)"
-                />
-                <defs>
-                  <linearGradient
-                    id="paint0_linear_64:366"
-                    x1="8.5"
-                    y1="0"
-                    x2="8.5"
-                    y2="18"
-                    gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#FF9A46" />
-                    <stop offset="0.489583" stop-color="#FF67C1" />
-                    <stop offset="0.973958" stop-color="#9D5FE9" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <img src={IconMinterOwner} />
             </div>
           </Popover>
         )}
       </div>
+      <ProposalModal
+        show={proposalModalShow}
+        onClose={onCloseProposalModal}
+        collection={collection}
+        contract={contract}
+      />
     </div>
   )
 }

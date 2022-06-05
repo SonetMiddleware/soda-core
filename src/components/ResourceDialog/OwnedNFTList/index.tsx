@@ -1,20 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import './index.less'
-import { Spin, Radio, Pagination as AntdPagination, message } from 'antd'
+import { Spin, Pagination as AntdPagination, message, Radio } from 'antd'
 import ImgDisplay from '../../ImgDisplay'
 import CommonButton from '../../Button'
-import type { IOwnedNFTData } from '../../../utils/apis'
+import { IOwnedNFTData, retrieveAssets } from '../../../utils/apis'
 import { getOwnedNFT } from '../../../utils/apis'
 import * as QrCode from '../../../utils/qrcode'
 import { mixWatermarkImg } from '../../../utils/imgHandler'
+import {
+  generateMetaForQrcode,
+  getNFTSource,
+  PlatwinContracts
+} from '@/utils/utils'
+import { getChainId } from '@/utils/messageHandler'
 
 interface IProps {
   account: string
   publishFunc?: () => void
+  isCurrentMainnet: boolean
 }
 
 export default (props: IProps) => {
-  const { account, publishFunc } = props
+  const { account, publishFunc, isCurrentMainnet } = props
   const [ownedNFTs, setOwnedNFTs] = useState<IOwnedNFTData[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedImg, setSelectedImg] = useState<number>()
@@ -24,24 +31,39 @@ export default (props: IProps) => {
 
   const fetchOwnedList = useCallback(
     async (page: number) => {
-      if (account) {
-        try {
-          setLoading(true)
-          const params = {
-            addr: account,
-            page,
-            gap: 9
+      try {
+        if (account) {
+          try {
+            setLoading(true)
+            const params = {
+              addr: account,
+              page,
+              gap: 9
+            }
+            const nfts = await getOwnedNFT(params)
+            console.log('ownedNFTs: ', nfts)
+            if (nfts.data) {
+              const images = await Promise.all(
+                nfts.data.map((item) => {
+                  return getNFTSource(item.uri)
+                })
+              )
+              nfts.data.forEach((item, index) => {
+                item.uri = images[index]
+              })
+            }
+
+            setOwnedNFTs(nfts.data)
+
+            setTotal(nfts.total)
+            setPage(page)
+            setLoading(false)
+          } catch (err) {
+            setLoading(false)
           }
-          const nfts = await getOwnedNFT(params)
-          console.log('ownedNFTs: ', nfts)
-          setOwnedNFTs([])
-          setOwnedNFTs(nfts.data)
-          setTotal(nfts.total)
-          setPage(page)
-          setLoading(false)
-        } catch (err) {
-          setLoading(false)
         }
+      } catch (e) {
+        setLoading(false)
       }
     },
     [account]
@@ -58,18 +80,23 @@ export default (props: IProps) => {
         setSubmitting(true)
         const selectedImgObj = ownedNFTs[selectedImg]
         const { uri, token_id } = selectedImgObj
-        const meta = `${uri}_${token_id}`
+        // const meta = `${uri}_${token_id}`
+        const chainId = await getChainId()
+        const meta = generateMetaForQrcode(
+          chainId,
+          selectedImgObj.contract,
+          Number(token_id)
+        )
         console.log('meta: ', meta)
         // create watermask
-        const imgUrl = uri.startsWith('http')
-          ? uri
-          : `https://${uri}.ipfs.dweb.link/`
+        const imgUrl =
+          uri && uri.startsWith('http') ? uri : `https://${uri}.ipfs.dweb.link/`
         const qrcode = await QrCode.generateQrCodeBase64(meta)
         const [imgDataUrl, imgDataBlob] = await mixWatermarkImg(imgUrl, qrcode)
         //@ts-ignore
         clipboardData.push(new ClipboardItem({ 'image/png': imgDataBlob }))
         message.success(
-          'Your NFT is minted and copyed. Please paste into the new post dialog',
+          'Your NFT is minted and copied. Please paste into the new post dialog',
           5
         )
         // trigger document focus
@@ -105,12 +132,12 @@ export default (props: IProps) => {
           }}
           value={selectedImg}>
           {ownedNFTs.map((item, index) => (
-            <Radio value={index} key={item.uri}>
+            <Radio value={index} key={item.uri} className="custom-radio">
               <div className="item-detail">
                 <ImgDisplay
                   className="img-item"
                   src={
-                    item.uri.startsWith('http')
+                    item.uri && item.uri.startsWith('http')
                       ? item.uri
                       : `https://${item.uri}.ipfs.dweb.link/`
                   }
