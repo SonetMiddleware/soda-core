@@ -21,6 +21,7 @@ export const getInlineMarketplace = async (meta?: number | NFT) => {
     }
   }
   const cid = chainId ? chainId : await getChainId()
+  console.log('[core-mp] getInlineMarketplace: ', cid)
   try {
     const svc = getAppConfig(cid).mpService
     for (const s of svc) {

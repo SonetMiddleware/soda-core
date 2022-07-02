@@ -11,7 +11,8 @@ import { ProposalStatusEnum, ProposalVoteEnum } from '../const'
 const HOST_MAP: Record<number, string> = {
   80001: 'https://testapi2.platwin.io:49336/api/v1',
   4: 'https://testapi3.platwin.io:59336/api/v1',
-  1: 'https://api.platwin.io:8081/api/v1'
+  1: 'https://api.platwin.io:8081/api/v1',
+  137: 'https://matic-api.platwin.io:8082/api/v1'
 }
 const getHost = async (meta?: NFT | number): Promise<string> => {
   let chainId = 0
@@ -36,6 +37,7 @@ export interface IDaoItem {
   twitter: string
   id: string
   img: string
+  isMyDao?: boolean
 }
 export interface ICollectionItem {
   id: string

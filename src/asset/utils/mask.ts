@@ -22,7 +22,7 @@ export const generateTokenMask = (token: NFT) => {
 export const decodeMaskToCache = async (str: string): Promise<TokenCache> => {
   const DEFAULT_CHAINID = 80001
   const DEFAULT_CONTRACT = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
-  if (str.includes('s.plat.win?')) {
+  if (str.includes('s.plat.win')) {
     const data = str.split('?')
     const mask = data[1].split('_')
     if (mask.length === 3) {

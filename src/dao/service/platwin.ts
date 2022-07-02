@@ -8,8 +8,10 @@ export const registerDao = async (params: any) => {
   const { collectionId, name, facebook, twitter } = params
   const web3 = createWeb3()
   const { accounts } = await serviceRequestAccounts()
+
   const account = accounts[0]
   const CHAIN_ID = await web3.eth.getChainId()
+  console.log('[extension-platwin]: ', account, CHAIN_ID)
   const daoContract = new web3.eth.Contract(
     RegisterDaoAbi.abi as AbiItem[],
     Contracts.DaoRegistery[CHAIN_ID]

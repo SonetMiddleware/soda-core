@@ -73,7 +73,7 @@ export const getCollectionDaoList = async (params: {
         name: c.name,
         image: c.img
       },
-      dao: toDaoItem(dao)
+      dao: dao && toDaoItem(dao)
     })
   }
   return res

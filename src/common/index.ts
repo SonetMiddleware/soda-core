@@ -14,3 +14,5 @@ export const formatDate = (datetime?: number) => {
 export const formatDateTime = (datetime: number) => {
   return moment(datetime).format('YYYY-MM-DD HH:mm:ss')
 }
+
+export const SUCCESS_CODE = 0
