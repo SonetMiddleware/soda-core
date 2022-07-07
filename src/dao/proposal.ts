@@ -82,15 +82,15 @@ export const getProposalList = async (params: {
 export const getProposalDetail = async () => {}
 export const vote = async (params: {
   voter: string
-  daoId: string
+  collectionId: string
   proposalId: string
   item: string
   sig: string
 }) => {
-  const { voter, daoId, proposalId, item, sig } = params
+  const { voter, collectionId, proposalId, item, sig } = params
   return await Api.vote({
     voter,
-    collection_id: daoId,
+    collection_id: collectionId,
     proposal_id: proposalId,
     item,
     sig
