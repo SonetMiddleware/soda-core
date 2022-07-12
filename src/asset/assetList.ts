@@ -6,22 +6,6 @@ import * as Api from './service/apis'
 export const getAssetList = async () => {}
 export const getAssetDetail = async () => {}
 
-// backward compatible
-const DEFAULT_CHAINID = 80001
-const DEFAULT_TOKENCONTRACT = '0x0daB724e3deC31e5EB0a000Aa8FfC42F1EC917C5'
-
-export const toToken = (t: Api.IOwnedNFTData, chainId?: number): NFT => {
-  return {
-    type: t.erc == '1155' ? AssetType.PFT : AssetType.NFT,
-    balance: t.amount,
-    chainId: chainId ? chainId : DEFAULT_CHAINID,
-    contract: t.contract,
-    tokenId: t.token_id,
-    source: t.uri,
-    owner: t.owner,
-    meta: { type: 'image', storage: 'ipfs' }
-  }
-}
 export const getOwnedTokens = async (params: {
   address: string
   chainId?: number
@@ -54,11 +38,10 @@ export const getFavTokens = async (params: {
   offset?: number
   limit?: number
 }): Promise<{ total: number; data: NFT[] }> => {
-  const { address, chainId: cid, contract: c, offset, limit } = params
+  const { address, chainId: cid, contract, offset, limit } = params
   let page: number
   if (offset && limit && limit > 0) page = Math.floor(offset / limit)
   const chainId = cid ? cid : await getChainId()
-  const contract = c ? c : DEFAULT_TOKENCONTRACT
   const tokens = await Api.getFavNFT({
     addr: address,
     // TODO: add chain id
