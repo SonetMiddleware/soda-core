@@ -5,6 +5,7 @@ export * from './application'
 export * from './dao'
 export * from './marketplace'
 export * from './util'
+export * from './asset/service/apis'
 
 import PackageIndexInit from '@soda/soda-package-index'
 const init = () => {
