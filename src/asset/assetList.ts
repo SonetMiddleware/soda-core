@@ -40,7 +40,7 @@ export const getFavTokens = async (params: {
 }): Promise<{ total: number; data: NFT[] }> => {
   const { address, chainId: cid, contract, offset, limit } = params
   let page: number
-  if (offset && limit && limit > 0) page = Math.floor(offset / limit)
+  if (offset && limit && limit > 0) page = Math.floor(offset / limit) + 1
   const chainId = cid ? cid : await getChainId()
   const tokens = await Api.getFavNFT({
     addr: address,
