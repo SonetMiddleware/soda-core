@@ -52,7 +52,7 @@ export const getCollectionDaoList = async (params: {
 }): Promise<{ total: number; data: CollectionDao[] }> => {
   const { address, offset, limit } = params
   let page: number
-  if (offset && limit && limit > 0) page = Math.floor(offset / limit)
+  if (offset && limit && limit > 0) page = Math.floor(offset / limit) + 1
   const collections = await Api.getCollectionList({
     addr: address,
     page,
@@ -162,7 +162,7 @@ export const getDaoList = async (params: {
 }): Promise<{ total: number; data: DaoItem[] }> => {
   const { address, offset, limit } = params
   let page: number
-  if (offset && limit && limit > 0) page = Math.floor(offset / limit)
+  if (offset && limit && limit > 0) page = Math.floor(offset / limit) + 1
   const daos = await Api.getDaoList({ addr: address, page, gap: limit })
   const res = { total: daos.total, data: [] }
   for (const d of daos.data) {
