@@ -1,4 +1,5 @@
 import { isNull } from 'lodash-es'
+import { getChainId } from '@soda/soda-util'
 
 /**
  * index starts at one.
@@ -26,13 +27,3 @@ export function regexMatch(
   return r[index] as string as any
 }
 
-export const getChainName = (chainId: number) => {
-  const map = {
-    137: 'polygon',
-    1: 'mainnet',
-    80001: 'mumbai',
-    4: 'rinkeby'
-  }
-  // fallback to mumbai
-  return map[chainId] || map[80001]
-}

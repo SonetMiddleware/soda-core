@@ -3,7 +3,9 @@ import {
   invokeWeb3Api,
   HttpRequestType,
   httpRequest,
-  getChainId
+  getChainId,
+  API_HOST,
+  getChainName
 } from '@soda/soda-util'
 import { ProposalStatusEnum, ProposalVoteEnum } from '../const'
 
@@ -49,6 +51,7 @@ export interface IGetDaoListParams {
   addr?: string
   page: number
   gap: number
+  chain_name?: string
 }
 export interface IGetDaoListResult {
   total: number
@@ -57,7 +60,9 @@ export interface IGetDaoListResult {
 export const getDaoList = async (
   params: IGetDaoListParams
 ): Promise<IGetDaoListResult> => {
-  const url = `${await getHost()}/dao`
+  const url = `${API_HOST}/dao`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params })
   console.debug('[core-dao] getDaoList: ', res)
   // FIXME: handle error
@@ -106,6 +111,7 @@ export interface IGetProposalListParams {
   dao: string
   page?: number
   gap?: number
+  chain_name?: string
 }
 export interface IGetProposalListResult {
   total: number
@@ -114,7 +120,9 @@ export interface IGetProposalListResult {
 export const getProposalList = async (
   params: IGetProposalListParams
 ): Promise<IGetProposalListResult> => {
-  const url = `${await getHost()}/proposal`
+  const url = `${API_HOST}/proposal`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params })
   console.debug('[core-dao] getProposalList: ', res)
   // FIXME: handle error
@@ -152,9 +160,12 @@ export interface ICreateProposalParams {
   items: string
   voter_type: number
   sig: string
+  chain_name?: string
 }
 export const createProposal = async (params: ICreateProposalParams) => {
-  const url = `${await getHost()}/proposal/create`
+  const url = `${API_HOST}/proposal/create`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params, type: HttpRequestType.POST })
   console.debug('[core-dao] createProposal: ', res)
   return res
@@ -166,9 +177,12 @@ export interface IVoteProposalParams {
   proposal_id: string
   item: string
   sig: string
+  chain_name?: string
 }
 export const vote = async (params: IVoteProposalParams) => {
-  const url = `${await getHost()}/proposal/vote`
+  const url = `${API_HOST}/proposal/vote`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params, type: HttpRequestType.POST })
   console.debug('[core-dao] vote: ', res)
   if (res.error || res.code !== SUCCESS_CODE) {
@@ -193,7 +207,7 @@ export interface IGetUserVoteResult {
 export const getUserVoteInfo = async (
   params: IGetUserVoteParams
 ): Promise<IGetUserVoteResult | null> => {
-  const url = `${await getHost()}/proposal/votes`
+  const url = `${API_HOST}/proposal/votes`
   const res = await httpRequest({ url, params })
   console.debug('[core-dao] getUserVoteInfo: ', res)
   // FIXME: handle error
@@ -205,6 +219,7 @@ export interface IGetCollectionListParams {
   addr: string
   page?: number
   gap?: number
+  chain_name?: string
 }
 export interface ICollectionItem {
   id: string
@@ -219,7 +234,9 @@ export interface IGetCollectionListResult {
 export const getCollectionList = async (
   params: IGetCollectionListParams
 ): Promise<IGetCollectionListResult> => {
-  const url = `${await getHost()}/collection-list`
+  const url = `${API_HOST}/collection-list`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params })
   console.debug('[core-dao] getCollectionList: ', params, res)
   // FIXME: handle error
@@ -232,7 +249,7 @@ export const getCollectionDaoByContract = async (params: {
   chainId?: number
 }): Promise<ICollectionItem | null> => {
   const { contract, chainId } = params
-  const url = `${await getHost(chainId)}/collection`
+  const url = `${API_HOST}/collection`
   const p = { contract }
   const res = await httpRequest({ url, params: p })
   console.debug('[core-dao] getCollectionDaoByContract: ', res)
@@ -246,7 +263,7 @@ export const getCollectionDaoByCollectionId = async (params: {
   chainId?: number
 }): Promise<ICollectionItem | null> => {
   const { id, chainId } = params
-  const url = `${await getHost(chainId)}/collection/${id}`
+  const url = `${API_HOST}/collection/${id}`
   const res = await httpRequest({ url })
   console.debug('[core-dao] getCollectionDaoByCollectionId: ', res)
   // FIXME: handle error
