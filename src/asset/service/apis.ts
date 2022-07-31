@@ -1,5 +1,11 @@
 import { NFT } from '@soda/soda-asset'
-import { getChainId, httpRequest, HttpRequestType } from '@soda/soda-util'
+import {
+  getChainId,
+  httpRequest,
+  HttpRequestType,
+  API_HOST,
+  getChainName
+} from '@soda/soda-util'
 
 // hard code for now
 const HOST_MAP: Record<number, string> = {
@@ -27,6 +33,7 @@ export interface IGetOwnedNFTParams {
   token_id?: string
   page?: number
   gap?: number
+  chain_name?: string
 }
 export interface IOwnedNFTData {
   // collection_id: ''; // collection id
@@ -52,7 +59,9 @@ export const getOwnedNFT = async (
       data: []
     }
   }
-  const url = `${await getHost()}/nfts`
+  const url = `${API_HOST}/nfts`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params })
   console.debug('[core-asset] getOwnedNFT: ', params, res)
   // FIXME: handle error
@@ -61,6 +70,7 @@ export const getOwnedNFT = async (
 }
 
 export interface IGetFavNFTParams {
+  chain_name?: string
   addr: string
   contract?: string
   page?: number
@@ -87,7 +97,9 @@ export const getFavNFT = async (
       data: []
     }
   }
-  const url = `${await getHost()}/favorite`
+  const chain_name = await getChainName()
+  const url = `${API_HOST}/favorite`
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params })
   console.debug('[core-asset] getFavNFT: ', params, res)
   // FIXME: handle error
@@ -96,6 +108,7 @@ export const getFavNFT = async (
 }
 
 export interface IAddToFavParams {
+  chain_name?: string
   addr: string
   contract: string
   token_id: string
@@ -103,7 +116,9 @@ export interface IAddToFavParams {
   fav: number // 0 or 1
 }
 export const addToFav = async (params: IAddToFavParams) => {
-  const url = `${await getHost()}/favorite-nft`
+  const url = `${API_HOST}/favorite-nft`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   try {
     const res = await httpRequest({ url, params, type: HttpRequestType.POST })
     console.debug('[core-asset] addToFav: ', params, res)
@@ -120,6 +135,7 @@ export interface IGetCollectionNFTListParams {
   addr?: string
   page?: number
   gap?: number
+  chain_name?: string
 }
 export interface IGetCollectionNFTListResult {
   total: number
@@ -131,7 +147,9 @@ export interface IGetCollectionNFTListResult {
 export const getCollectionNFTList = async (
   params: IGetCollectionNFTListParams
 ): Promise<IGetCollectionNFTListResult> => {
-  const url = `${await getHost()}/collection/nfts`
+  const url = `${API_HOST}/collection/nfts`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
   const res = await httpRequest({ url, params })
   console.debug('[core-asset] getCollectionNFTList: ', params, res)
   // FIXME: handle error

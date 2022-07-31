@@ -1,4 +1,5 @@
 import { isNull } from 'lodash-es'
+import { getChainId } from '@soda/soda-util'
 
 /**
  * index starts at one.
@@ -25,3 +26,4 @@ export function regexMatch(
   }
   return r[index] as string as any
 }
+
