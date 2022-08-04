@@ -185,6 +185,7 @@ export const getTokenSource = async (meta: {
   })
   return source
 }
+
 export const getCacheMedia = async (meta: {
   token: NFT
   storageConfig?: any
@@ -193,7 +194,10 @@ export const getCacheMedia = async (meta: {
 }) => {
   try {
     const { token, storageConfig, attachInfo, withMask } = meta
-    const source = await getTokenSource({ token, storageConfig })
+    let source = await getTokenSource({ token, storageConfig })
+    // TODO: get cache media from media type
+    // get cache image, for opensea protocol only
+    if (storageConfig.uri && source.uri) source = source.uri
     const cacheSrc = await getCacheImage(token.meta.type, {
       source,
       attachInfo: attachInfo
@@ -238,7 +242,7 @@ export const renderTokenFromCacheMedia = async (
   }
 }
 
-const renderToken = async (
+export const renderToken = async (
   token: NFT,
   meta: { dom: HTMLDivElement; config?: any }
 ) => {
@@ -247,9 +251,20 @@ const renderToken = async (
     const { dom, config } = meta
     const source = await getTokenSource({ token })
     if (!source) return res
-    const mediaType = token.meta.type || 'image'
+    let mediaType = token.meta.type || 'image'
+    // TODO: support protocol, for now, opensea protocol only
+    if (source.extra && config && config.extra && config.extra.length > 0) {
+      for (const ce of config.extra) {
+        if (source.extra[ce]) {
+          mediaType = ce
+          break
+        }
+      }
+    } else {
+      mediaType = 'image'
+    }
     res.result = await render(mediaType, {
-      source,
+      source: mediaType === 'image' ? source : source.extra[mediaType],
       dom: dom,
       config: config
     })
