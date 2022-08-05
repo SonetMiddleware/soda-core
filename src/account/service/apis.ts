@@ -1,6 +1,6 @@
-import { httpRequest, HttpRequestType } from '@soda/soda-util'
+import { httpRequest, HttpRequestType, API_HOST, getChainName, } from '@soda/soda-util'
 
-const BACKEND_HOST = process.env.API_HOST
+const BACKEND_HOST = API_HOST
 
 const SUCCESS_CODE = 0
 
