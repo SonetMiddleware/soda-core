@@ -44,7 +44,7 @@ const drawImgWithFixedSize = async (
 }
 
 export const mixWatermarkImg = async (
-  imgSrc: string | File,
+  imgSrc: string | File | any,
   watermarkBase64: string,
   imgSrcW: number = 500,
   imgSrcH: number = 500,
@@ -56,7 +56,16 @@ export const mixWatermarkImg = async (
   // canvas.width = imgSrcH;
   // canvas.height = imgSrcW;
   const img = new Image()
-  img.src = typeof imgSrc === 'string' ? imgSrc : URL.createObjectURL(imgSrc)
+  if (typeof imgSrc === 'string') {
+    img.src = imgSrc
+  } else if (imgSrc instanceof File) {
+    img.src = URL.createObjectURL(imgSrc)
+  } else if (imgSrc.uri) {
+    img.src = imgSrc.uri
+  } else if (imgSrc.origin) {
+    img.src = imgSrc.origin
+  }
+
   img.setAttribute('crossOrigin', 'Anonymous')
   // img.onload = function () {
   //   context?.drawImage(img, 0, 0, imgSrcW, imgSrcH);
