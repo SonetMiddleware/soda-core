@@ -13,6 +13,7 @@ import { decodeQrcodeFromImgSrc, generateQrCodeBase64 } from './utils/qrcode'
 import { decodeMaskToCache, generateTokenMask } from './utils/mask'
 import { getChainId as utilGetChainId } from '../account'
 import { getAppConfig } from '@soda/soda-package-index'
+import { MEDIAHOOK } from './utils/hook'
 
 const getChainId = async (chainId?: number): Promise<number> => {
   return chainId ? chainId : await utilGetChainId()
@@ -183,6 +184,16 @@ export const getTokenSource = async (meta: {
     uri: token.source,
     config
   })
+  // FIXME: opensea animation media hook, shall apply animation media type
+  if (!source.uri && source.extra && source.extra.animation) {
+    const { chainId, contract, tokenId } = token
+    try {
+      const src = MEDIAHOOK[chainId][contract.toLowerCase()][tokenId]
+      source.uri = src.uri
+      source.origin = src.origin
+      console.debug('[core] getTokenSource: hook media type', token)
+    } catch (e) {}
+  }
   return source
 }
 
