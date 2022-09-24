@@ -80,6 +80,12 @@ export const getProposalList = async (params: {
   return res
 }
 export const getProposalDetail = async () => {}
+
+export const getProposalPermission = async (dao: string, address: string) => {
+  const res = await Api.getProposalPermission(dao, address)
+  return res
+}
+
 export const vote = async (params: {
   voter: string
   collectionId: string

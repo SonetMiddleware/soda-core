@@ -20,6 +20,7 @@ export interface IDaoItem {
   id: string
   img: string
   isMyDao?: boolean
+  centralized: number
 }
 export interface ICollectionItem {
   id: string
@@ -29,6 +30,7 @@ export interface ICollectionItem {
 }
 export interface IGetDaoListParams {
   addr?: string
+  name?: string
   page: number
   gap: number
   chain_name?: string
@@ -85,6 +87,23 @@ export const getProposalStatus = (
       return ProposalStatusEnum.INVALID
     }
   }
+}
+
+export const getProposalPermission = async (
+  dao: string,
+  address: string
+): Promise<boolean> => {
+  const url = `${API_HOST}/proposal/permission`
+  const chain_name = await getChainName()
+  const params = {
+    dao,
+    addr: address,
+    chain_name
+  }
+  const res = await httpRequest({ url, params })
+  console.debug('[core-dao] getProposalPermission: ', res)
+  // FIXME: handle error
+  return res.data
 }
 
 export interface IGetProposalListParams {

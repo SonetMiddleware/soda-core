@@ -7,7 +7,7 @@ export const sha3 = (...val: Mixed[]): string | null => {
 
 import moment from 'moment'
 
-export const formatDate = (datetime: number, format: string = 'DD/MM/YYYY') => {
+export const formatDate = (datetime: number, format: string = 'MM/DD/YYYY') => {
   return datetime ? moment(datetime).format(format) : ''
 }
 

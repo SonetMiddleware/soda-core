@@ -140,6 +140,7 @@ export interface DaoItem {
   accounts: any
   id: string
   image: string
+  centralized: number
 }
 export const toDaoItem = (d: Api.IDaoItem): DaoItem => {
   return {
@@ -151,19 +152,21 @@ export const toDaoItem = (d: Api.IDaoItem): DaoItem => {
       twitter: d.twitter
     },
     id: d.id,
-    image: d.img
+    image: d.img,
+    centralized: d.centralized
   }
 }
 export const createDao = async () => {}
 export const getDaoList = async (params: {
   address?: string
+  name?: string
   offset?: number
   limit?: number
 }): Promise<{ total: number; data: DaoItem[] }> => {
-  const { address, offset, limit } = params
+  const { address, name, offset, limit } = params
   let page: number
   if (offset && limit && limit > 0) page = Math.floor(offset / limit) + 1
-  const daos = await Api.getDaoList({ addr: address, page, gap: limit })
+  const daos = await Api.getDaoList({ addr: address, name, page, gap: limit })
   const res = { total: daos.total, data: [] }
   for (const d of daos.data) {
     res.data.push(toDaoItem(d))
