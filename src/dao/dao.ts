@@ -141,6 +141,9 @@ export interface DaoItem {
   id: string
   image: string
   centralized: number
+  tags: string[]
+  types: string[]
+  status: string
 }
 export const toDaoItem = (d: Api.IDaoItem): DaoItem => {
   return {
@@ -153,7 +156,10 @@ export const toDaoItem = (d: Api.IDaoItem): DaoItem => {
     },
     id: d.id,
     image: d.img,
-    centralized: d.centralized
+    centralized: d.centralized,
+    tags: d.tags,
+    types: d.types,
+    status: d.status
   }
 }
 export const createDao = async () => {}

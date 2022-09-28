@@ -21,6 +21,9 @@ export interface IDaoItem {
   img: string
   isMyDao?: boolean
   centralized: number
+  tags: string[]
+  types: string[]
+  status: string
 }
 export interface ICollectionItem {
   id: string
