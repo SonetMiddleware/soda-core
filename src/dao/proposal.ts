@@ -24,7 +24,7 @@ export const createProposal = async (params: {
   startTime: number
   endTime: number
   ballotThreshold: number
-  items: string
+  items: string[]
   voterType: number
   sig: string
 }) => {

@@ -122,7 +122,8 @@ export interface IGetProposalListResult {
 export const getProposalList = async (
   params: IGetProposalListParams
 ): Promise<IGetProposalListResult> => {
-  const url = `${API_HOST}/proposal`
+  const v2 = API_HOST.slice(0, API_HOST.length - 1) + '2'
+  const url = `${v2}/proposal`
   const chain_name = await getChainName()
   params.chain_name = chain_name
   const res = await httpRequest({ url, params })
@@ -130,13 +131,13 @@ export const getProposalList = async (
   // FIXME: handle error
   if (res.error) return { total: 0, data: [] }
   const result = res.data
-  result.data.forEach((temp: any) => (temp.items = temp.items.split(',')))
-  result.data.forEach(
-    (temp: any) =>
-      (temp.results = temp.results
-        .split(',')
-        .map((num: string) => parseInt(num)))
-  )
+  // result.data.forEach((temp: any) => (temp.items = temp.items.split(',')))
+  // result.data.forEach(
+  //   (temp: any) =>
+  //     (temp.results = temp.results
+  //       .split(',')
+  //       .map((num: string) => parseInt(num)))
+  // )
   //get current block height
   const blockRes: any = await invokeWeb3Api({
     module: 'eth',
@@ -159,7 +160,7 @@ export interface ICreateProposalParams {
   start_time: number
   end_time: number
   ballot_threshold: number
-  items: string
+  items: string[]
   voter_type: number
   sig: string
   chain_name?: string
