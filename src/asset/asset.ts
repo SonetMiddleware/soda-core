@@ -216,7 +216,7 @@ export const getCacheMedia = async (meta: {
     if (!cacheSrc)
       throw new Error('[core] error on getCacheMedia: empty source')
     if (!withMask) return cacheSrc
-    const mask = generateTokenMask(token)
+    const mask = await generateTokenMask(token)
     const qrcode = await generateQrCodeBase64(mask)
     const [imgDataUrl, imgDataBlob] = await mixWatermarkImg(cacheSrc!, qrcode)
     return imgDataBlob

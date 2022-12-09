@@ -9,13 +9,15 @@ export const bind1WithWeb3Proof = async (params: {
   application: string
   appid: string
   sig: string
+  chain_name: string
 }) => {
-  const { address, application, appid, sig } = params
+  const { address, application, appid, sig, chain_name } = params
   return Api.bind1WithWeb3Proof({
     addr: address,
     platform: application,
     tid: appid,
-    sig
+    sig,
+    chain_name
   })
 }
 export const bind2WithWeb2Proof = async (params: {
@@ -40,13 +42,15 @@ export const unbind = async (params: {
   application: string
   appid: string
   sig: string
+  chain_name: string
 }) => {
-  const { address, application, appid, sig } = params
+  const { address, application, appid, sig, chain_name } = params
   return Api.unbind({
     addr: address,
     platform: application,
     tid: appid,
-    sig
+    sig,
+    chain_name
   })
 }
 

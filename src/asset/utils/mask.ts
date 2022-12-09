@@ -1,22 +1,34 @@
 import { NFT, TokenCache } from '@soda/soda-asset'
-import { getChainId } from '@soda/soda-util'
+import { getChainId, getChainName, getChainIdByName } from '@soda/soda-util'
 import { getToken } from '../asset'
+import { sha256 } from 'js-sha256'
+import { getNFTByHash, registerNFTHash } from '../service/apis'
 
 const URL_Prefix = 'https://s.plat.win?'
 
-export const generateTokenMask = (token: NFT) => {
-  return (
-    URL_Prefix +
-    encodeNumBase64(Number(token.chainId)) +
-    '_' +
-    encodeHexBase64(
-      token.contract.startsWith('0x')
-        ? token.contract.substr(2)
-        : token.contract
-    ) +
-    '_' +
-    encodeNumBase64(Number(token.tokenId))
-  )
+export const generateTokenMask = async (token: NFT) => {
+  const chain_name = await getChainName(token.chainId)
+  const nftHash = sha256(chain_name + token.contract + token.tokenId)
+  registerNFTHash({
+    chain_name: chain_name,
+    contract: token.contract,
+    token_id: token.tokenId
+  })
+  const maskCode = URL_Prefix + encodeHexBase64(nftHash)
+  console.log('[generateTokenMask]: ', maskCode)
+  return maskCode
+  // return (
+  //   URL_Prefix +
+  //   encodeNumBase64(Number(chainId)) +
+  //   '_' +
+  //   encodeHexBase64(
+  //     token.contract.startsWith('0x')
+  //       ? token.contract.substr(2)
+  //       : token.contract
+  //   ) +
+  //   '_' +
+  //   encodeNumBase64(Number(token.tokenId))
+  // )
 }
 
 export const decodeMaskToCache = async (str: string): Promise<TokenCache> => {
@@ -25,7 +37,18 @@ export const decodeMaskToCache = async (str: string): Promise<TokenCache> => {
   if (str.includes('s.plat.win')) {
     const data = str.split('?')
     const mask = data[1].split('_')
-    if (mask.length === 3) {
+    if (mask.length === 1) {
+      // new encode for compatible with flow
+      const nftHash = decodeHexBase64(mask[0])
+      const nft = await getNFTByHash(nftHash)
+      const cache: any = {
+        chainId: getChainIdByName(nft.chain_name),
+        contract: nft.contract,
+        tokenId: nft.token_id,
+        source: nft.uri
+      }
+      return cache
+    } else if (mask.length === 3) {
       // get source tokenURI(uint tokenId)
       const chainId = decodeNumBase64(mask[0])
       const contract = '0x' + decodeHexBase64(mask[1])

@@ -4,8 +4,8 @@ import { getChains, invokeChainApi } from '@soda/soda-asset'
 
 export const getAddressList = async () => {}
 
-export const getAddress = async () => {
-  return await getUserAccount()
+export const getAddress = async (targetChainId?: number) => {
+  return await getUserAccount(targetChainId)
 }
 export const getChainId = async () => {
   return await utilGetChainId()

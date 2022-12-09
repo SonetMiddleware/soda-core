@@ -143,3 +143,43 @@ export const getCollectionNFTList = async (
     }
   return res.data
 }
+
+export interface IGetNFTByHashResp {
+  chain_name: string
+  contract: string
+  token_id: string
+  uri?: string
+}
+export const getNFTByHash = async (
+  hash: string
+): Promise<IGetNFTByHashResp> => {
+  const url = `${API_HOST}/nft/${hash}`
+  const res = await httpRequest({ url })
+  console.debug('[core-asset] getNFTByHash: ', hash, res)
+  // FIXME: handle error
+  if (res.error) return
+  if (res.data && res.data.toke_id) {
+    //FIXME: handle backend error
+    res.data.token_id = res.data.toke_id
+  }
+  return res.data
+}
+
+export interface IRegisterNFTHashParams {
+  chain_name: string | number
+  contract: string
+  token_id: string
+  owner?: string
+}
+
+export const registerNFTHash = async (params: IRegisterNFTHashParams) => {
+  const url = `${API_HOST}/nft/register`
+  if (typeof params.chain_name === 'number') {
+    params.chain_name = await getChainName(params.chain_name)
+  }
+  const res = await httpRequest({ url, params, type: HttpRequestType.POST })
+  console.debug('[core-asset] registerNFTHash: ', params, res)
+  // FIXME: handle error
+  if (res.error) return
+  return res.data
+}

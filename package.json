@@ -27,6 +27,7 @@
     "@soda/soda-storage-sdk": "workspace:^0.0.1",
     "@soda/soda-util": "workspace:^0.0.1",
     "awesome-qr": "^2.1.5-rc.0",
+    "js-sha256": "^0.9.0",
     "lodash-es": "^4.17.21",
     "moment": "^2.29.3",
     "web3": "^1.4.0",

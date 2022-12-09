@@ -11,16 +11,16 @@ const EthMainnetContracts = {
   DAORegistry: '0x1443D92E71eFADE956Aa0198F7EC5eeb6d5f2E0F'
 }
 type ContractConfigs = {
-  [key: string]: {
-    [key: number]: string
-  }
+  [key: string]: Record<number | string, string>
 }
 const configs: ContractConfigs = {
   DaoRegistery: {
     80001: TestnetContracts.DAORegistry,
     137: PolygonMainnetContracts.DAORegistry,
     4: RinkebyContracts.DAORegistry,
-    1: EthMainnetContracts.DAORegistry
+    1: EthMainnetContracts.DAORegistry,
+    flowmain: EthMainnetContracts.DAORegistry,
+    flowtest: EthMainnetContracts.DAORegistry
   }
 }
 export default configs

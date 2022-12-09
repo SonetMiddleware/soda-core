@@ -1,4 +1,9 @@
-import { httpRequest, HttpRequestType, API_HOST, getChainName, } from '@soda/soda-util'
+import {
+  httpRequest,
+  HttpRequestType,
+  API_HOST,
+  getChainName
+} from '@soda/soda-util'
 
 const BACKEND_HOST = API_HOST
 
@@ -9,6 +14,7 @@ export interface IBind1Params {
   tid: string
   sig: string
   platform: string
+  chain_name: string
 }
 export const bind1WithWeb3Proof = async (params: IBind1Params) => {
   const url = `${BACKEND_HOST}/bind-addr`
@@ -37,6 +43,7 @@ export interface IUnbindParams {
   tid: string
   platform: string
   sig: string
+  chain_name: string
 }
 export const unbind = async (params: IUnbindParams) => {
   const url = `${BACKEND_HOST}/unbind-addr`
