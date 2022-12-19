@@ -80,9 +80,13 @@ export const getProposalStatus = (
   if (now < item.start_time) {
     return ProposalStatusEnum.SOON
   } else if (now > item.start_time && now < item.end_time) {
-    return item.snapshot_block <= blockheight
-      ? ProposalStatusEnum.OPEN
-      : ProposalStatusEnum.SOON
+    if (blockheight) {
+      return item.snapshot_block <= blockheight
+        ? ProposalStatusEnum.OPEN
+        : ProposalStatusEnum.SOON
+    } else {
+      return ProposalStatusEnum.OPEN
+    }
   } else if (now >= item.end_time) {
     if (totalVotes >= item.ballot_threshold) {
       return ProposalStatusEnum.VALID
@@ -139,11 +143,15 @@ export const getProposalList = async (
   //       .map((num: string) => parseInt(num)))
   // )
   //get current block height
-  const blockRes: any = await invokeWeb3Api({
-    module: 'eth',
-    method: 'getBlockNumber'
-  })
-  const { result: currentBlockHeight } = blockRes
+  let currentBlockHeight = 0
+  if (!chain_name.includes('flow')) {
+    const blockRes: any = await invokeWeb3Api({
+      module: 'eth',
+      method: 'getBlockNumber'
+    })
+    const { result } = blockRes
+    currentBlockHeight = result || 0
+  }
 
   result.data.forEach(
     (temp: any) => (temp.status = getProposalStatus(temp, currentBlockHeight))
