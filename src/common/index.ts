@@ -16,3 +16,8 @@ export const formatDateTime = (datetime: number) => {
 }
 
 export const SUCCESS_CODE = 0
+
+export const PLATFORM = {
+  Facebook: 'Facebook',
+  Twitter: 'Twitter'
+}
