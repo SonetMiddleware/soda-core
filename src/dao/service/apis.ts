@@ -113,6 +113,20 @@ export const getProposalPermission = async (
   return res.data
 }
 
+export const getVotePermission = async (params) => {
+  const url = `${API_HOST}/proposal/votes/num`
+  const chain_name = await getChainName()
+  params.chain_name = chain_name
+  const res = await httpRequest({ url, params, type: HttpRequestType.GET })
+  console.debug('[core-dao] getUserVotePermission: ', res)
+  const { data } = res
+  if ((typeof data === 'number' && data > 0) || (data && data.votes > 0)) {
+    return true
+  } else {
+    return false
+  }
+}
+
 export interface IGetProposalListParams {
   dao: string
   page?: number

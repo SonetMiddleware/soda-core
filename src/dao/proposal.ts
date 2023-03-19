@@ -86,6 +86,15 @@ export const getProposalPermission = async (dao: string, address: string) => {
   return res
 }
 
+export const getVotePermission = async (params: {
+  voter_type: number
+  collection_id: string | number
+  voter: string
+  proposal_id: string
+}) => {
+  return Api.getVotePermission(params)
+}
+
 export const vote = async (params: {
   voter: string
   collectionId: string
