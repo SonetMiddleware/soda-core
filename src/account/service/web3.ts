@@ -2,7 +2,9 @@ import {
   createWeb3,
   registerMessage,
   sendMessage,
-  isMetamaskConnected
+  isMetamaskConnected,
+  isMetamaskAccountConnected,
+  connectMetaMask
 } from '@soda/soda-util'
 
 export const requestSignMsg = async (msg: string, address: string) => {
@@ -26,7 +28,14 @@ const MessageTypes = {
 
 export const sign = async (request: { message: string; address: string }) => {
   const response: any = {}
+  debugger
   try {
+    if (!isMetamaskAccountConnected()) {
+      const connection = await connectMetaMask()
+      if (!connection) {
+        return
+      }
+    }
     const res: any = await sendMessage({
       type: MessageTypes.Sign_Message,
       request
