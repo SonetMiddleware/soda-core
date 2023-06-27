@@ -101,14 +101,16 @@ export const vote = async (params: {
   proposalId: string
   item: string
   sig: string
+  comment?: string
 }) => {
-  const { voter, collectionId, proposalId, item, sig } = params
+  const { voter, collectionId, proposalId, item, sig, comment } = params
   return await Api.vote({
     voter,
     collection_id: collectionId,
     proposal_id: proposalId,
     item,
-    sig
+    sig,
+    comment
   })
 }
 export const getUserVoteInfo = async (params: {
@@ -137,4 +139,14 @@ export const getUserVoteInfo = async (params: {
         votes: res.votes
       }
     : null
+}
+
+export const getProposalCommentList = async (params: {
+  proposal_id: string
+  collection_id: string
+  page?: number
+  gap?: number
+}) => {
+  const res = await Api.getProposalCommentList(params)
+  return res
 }

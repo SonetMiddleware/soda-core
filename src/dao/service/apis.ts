@@ -203,6 +203,7 @@ export interface IVoteProposalParams {
   item: string
   sig: string
   chain_name?: string
+  comment?: string
 }
 export const vote = async (params: IVoteProposalParams) => {
   const url = `${API_HOST}/proposal/vote`
@@ -295,3 +296,16 @@ export const getCollectionDaoByCollectionId = async (params: {
   if (res.error) return null
   return res.data || null
 }
+
+export const getProposalCommentList = async (params: {
+  proposal_id: string;
+  collection_id: string;
+  page?: number;
+  gap?: number;
+}) => {
+  const url = `${API_HOST}/votes/comments`;
+  const res = await httpRequest({ url, params });
+  console.debug("[core-dao] getProposalCommentList: ", res);
+  if (res.error) return null;
+  return res.data;
+};
