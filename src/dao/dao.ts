@@ -17,10 +17,11 @@ export const registerDao = async (info: {
   facebook?: string
   twitter?: string
 }) => {
-  const res: any = await sendMessage({
-    type: MessageTypes.Register_DAO,
-    request: info
-  })
+  // const res: any = await sendMessage({
+  //   type: MessageTypes.Register_DAO,
+  //   request: info
+  // })
+  const res: any = await registerDaoMessageHandler(info)
   if (res.error) throw new Error('Error to register DAO: ' + res)
   return res.result
 }

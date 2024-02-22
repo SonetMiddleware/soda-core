@@ -28,18 +28,12 @@ const MessageTypes = {
 
 export const sign = async (request: { message: string; address: string }) => {
   const response: any = {}
-  debugger
   try {
-    if (!isMetamaskAccountConnected()) {
-      const connection = await connectMetaMask()
-      if (!connection) {
-        return
-      }
-    }
-    const res: any = await sendMessage({
-      type: MessageTypes.Sign_Message,
-      request
-    })
+    // const res: any = await sendMessage({
+    //   type: MessageTypes.Sign_Message,
+    //   request
+    // })
+    const res = await signMessageHandler(request)
     return res
   } catch (e) {
     console.error(e)
@@ -48,7 +42,10 @@ export const sign = async (request: { message: string; address: string }) => {
   return response
 }
 
-async function signMessageHandler(request: any) {
+async function signMessageHandler(request: {
+  message: string
+  address: string
+}) {
   const response: any = {}
   if (!isMetamaskConnected()) {
     response.error = 'Metamask not connected'
